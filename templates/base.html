@@ -64,6 +64,12 @@
                             <i class="fas fa-user"></i> {{ session.username }}
                         </a>
                         <ul class="dropdown-menu">
+                            {% if session.is_admin %}
+                            <li><a class="dropdown-item" href="{{ url_for('change_password') }}">
+                                <i class="fas fa-key"></i> Change Password
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            {% endif %}
                             <li><a class="dropdown-item" href="{{ url_for('logout') }}">
                                 <i class="fas fa-sign-out-alt"></i> Logout
                             </a></li>

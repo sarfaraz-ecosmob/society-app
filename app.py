@@ -264,6 +264,40 @@ def mark_maintenance_paid(maintenance_id):
     flash('Payment status updated successfully!', 'success')
     return redirect(url_for('maintenance'))
 
+@app.route('/change_password', methods=['GET', 'POST'])
+@admin_required
+def change_password():
+    if request.method == 'POST':
+        current_password = request.form['current_password']
+        new_password = request.form['new_password']
+        confirm_password = request.form['confirm_password']
+        
+        # Get current user
+        user = User.query.get(session['user_id'])
+        
+        # Verify current password
+        if not check_password_hash(user.password_hash, current_password):
+            flash('Current password is incorrect', 'error')
+            return render_template('change_password.html')
+        
+        # Validate new password
+        if new_password != confirm_password:
+            flash('New passwords do not match', 'error')
+            return render_template('change_password.html')
+        
+        if len(new_password) < 6:
+            flash('New password must be at least 6 characters long', 'error')
+            return render_template('change_password.html')
+        
+        # Update password
+        user.password_hash = generate_password_hash(new_password)
+        db.session.commit()
+        
+        flash('Password changed successfully!', 'success')
+        return redirect(url_for('dashboard'))
+    
+    return render_template('change_password.html')
+
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
@@ -280,4 +314,4 @@ if __name__ == '__main__':
             db.session.commit()
             print("Default admin user created: username='admin', password='admin123'")
     
-    app.run(debug=True, port=5001)
+    app.run(debug=True, host='0.0.0.0', port=5001)

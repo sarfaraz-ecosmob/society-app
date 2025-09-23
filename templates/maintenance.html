@@ -60,46 +60,17 @@
                         </td>
                         <td>
                             {% if record.payment_status != 'Paid' %}
-                            <button type="button" class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#paymentModal{{ record.id }}">
+                            <button type="button" class="btn btn-sm btn-success mark-paid-btn" 
+                                    data-record-id="{{ record.id }}"
+                                    data-house="{{ record.house.house_number }} - {{ record.house.building_wing }}"
+                                    data-month-year="{{ record.month_year }}"
+                                    data-total-amount="{{ record.amount }}"
+                                    data-bs-toggle="modal" data-bs-target="#paymentModal">
                                 <i class="fas fa-check"></i> Mark Paid
                             </button>
                             {% endif %}
                         </td>
                     </tr>
-                    
-                    <!-- Payment Modal -->
-                    <div class="modal fade" id="paymentModal{{ record.id }}" tabindex="-1">
-                        <div class="modal-dialog">
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                    <h5 class="modal-title">Mark Payment Received</h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                </div>
-                                <form method="POST" action="{{ url_for('mark_maintenance_paid', maintenance_id=record.id) }}">
-                                    <div class="modal-body">
-                                        <div class="mb-3">
-                                            <label class="form-label">House: {{ record.house.house_number }} - {{ record.house.building_wing }}</label>
-                                        </div>
-                                        <div class="mb-3">
-                                            <label class="form-label">Month/Year: {{ record.month_year }}</label>
-                                        </div>
-                                        <div class="mb-3">
-                                            <label class="form-label">Total Amount: ₹{{ "%.2f"|format(record.amount) }}</label>
-                                        </div>
-                                        <div class="mb-3">
-                                            <label for="paid_amount{{ record.id }}" class="form-label">Paid Amount *</label>
-                                            <input type="number" class="form-control" id="paid_amount{{ record.id }}" name="paid_amount" 
-                                                   min="0" max="{{ record.amount }}" step="0.01" required>
-                                        </div>
-                                    </div>
-                                    <div class="modal-footer">
-                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                        <button type="submit" class="btn btn-success">Mark Paid</button>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
                     {% endfor %}
                 </tbody>
             </table>
@@ -116,4 +87,78 @@
         {% endif %}
     </div>
 </div>
+
+<!-- Single Payment Modal -->
+<div class="modal fade" id="paymentModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Mark Payment Received</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" id="paymentForm">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label" id="houseLabel">House: </label>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" id="monthYearLabel">Month/Year: </label>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" id="totalAmountLabel">Total Amount: </label>
+                    </div>
+                    <div class="mb-3">
+                        <label for="paid_amount" class="form-label">Paid Amount *</label>
+                        <input type="number" class="form-control" id="paid_amount" name="paid_amount" 
+                               min="0" step="0.01" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">Mark Paid</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const markPaidButtons = document.querySelectorAll('.mark-paid-btn');
+    const modal = document.getElementById('paymentModal');
+    const form = document.getElementById('paymentForm');
+    const houseLabel = document.getElementById('houseLabel');
+    const monthYearLabel = document.getElementById('monthYearLabel');
+    const totalAmountLabel = document.getElementById('totalAmountLabel');
+    const paidAmountInput = document.getElementById('paid_amount');
+    
+    markPaidButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const recordId = this.getAttribute('data-record-id');
+            const house = this.getAttribute('data-house');
+            const monthYear = this.getAttribute('data-month-year');
+            const totalAmount = this.getAttribute('data-total-amount');
+            
+            // Update modal content
+            houseLabel.textContent = 'House: ' + house;
+            monthYearLabel.textContent = 'Month/Year: ' + monthYear;
+            totalAmountLabel.textContent = 'Total Amount: ₹' + parseFloat(totalAmount).toFixed(2);
+            
+            // Update form action
+            form.action = '/maintenance/mark_paid/' + recordId;
+            
+            // Update input max value
+            paidAmountInput.max = totalAmount;
+            paidAmountInput.value = '';
+            
+            // Focus on the input field when modal is shown
+            modal.addEventListener('shown.bs.modal', function() {
+                paidAmountInput.focus();
+            }, { once: true });
+        });
+    });
+});
+</script>
 {% endblock %}
