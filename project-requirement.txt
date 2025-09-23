@@ -1,0 +1,91 @@
+Core Features (MVP – Minimum Viable Product)
+1. Authentication & Roles
+
+Admin Login – To manage the entire system (houses, members, bills, announcements).
+
+Member Login (Optional in MVP) – To view dues, notices, and submit complaints.
+
+2. House & Member Management
+
+House Details
+
+House/Flat Number
+
+Building/Wing Name
+
+Owner Name
+
+Contact Number, Email
+
+Number of Occupants
+
+Member Details
+
+Name, Age, Gender
+
+Role (Owner / Tenant)
+
+Emergency Contact
+
+Vehicle Details (Car/Bike number, parking slot)
+
+3. Maintenance Tracking
+
+Add monthly maintenance amount (per house)
+
+Track paid vs pending payments
+
+Generate receipts
+
+4. Admin Interface
+
+Add/Edit/Delete Houses
+
+Add/Edit/Delete Members
+
+Mark Maintenance Paid
+
+Download Reports (CSV/Excel)
+
+🚀 Recommended Additional Features (Value-Add)
+📢 Communication & Notifications
+
+Post Announcements (upcoming meetings, events, repairs)
+
+Send email/SMS/WhatsApp notifications to residents.
+
+💳 Online Payment Integration
+
+Payment gateway integration (Razorpay, Stripe, PayPal, UPI)
+
+Auto-update payment status.
+
+📊 Dashboard & Reports
+
+View total collections, pending payments, dues per house
+
+Charts for income/expenses over months.
+
+🛠️ Complaint / Request System
+
+Residents can raise complaints (plumbing, electricity, security)
+
+Admin can assign & track resolution status.
+
+🗂 Document Management
+
+Store & share society documents (meeting minutes, NOCs, by-laws)
+
+Secure download access for members.
+
+🏷 Event & Facility Booking
+
+Allow residents to book common facilities (hall, gym, clubhouse)
+
+Show availability calendar.
+
+🔐 Security & Gate Management (Advanced)
+
+Visitor Entry Logs (if you integrate with a tablet at gate)
+
+Digital approval for deliveries/guests.

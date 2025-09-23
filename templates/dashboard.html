@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Society Maintenance App{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="container">
+        <h1><i class="fas fa-tachometer-alt"></i> Dashboard</h1>
+        <p>Welcome back, {{ session.username }}! Here's an overview of your society.</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-3">
+        <div class="stats-card text-center">
+            <div class="stats-number">{{ total_houses }}</div>
+            <div class="stats-label">
+                <i class="fas fa-home"></i> Total Houses
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="stats-card text-center">
+            <div class="stats-number">{{ total_members }}</div>
+            <div class="stats-label">
+                <i class="fas fa-users"></i> Total Members
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="stats-card text-center">
+            <div class="stats-number">{{ total_maintenance }}</div>
+            <div class="stats-label">
+                <i class="fas fa-money-bill-wave"></i> Maintenance Records
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="stats-card text-center">
+            <div class="stats-number">{{ pending_payments }}</div>
+            <div class="stats-label">
+                <i class="fas fa-clock"></i> Pending Payments
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if session.is_admin %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-history"></i> Recent Maintenance Records
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if recent_maintenance %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>House</th>
+                                <th>Month/Year</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for record in recent_maintenance %}
+                            <tr>
+                                <td>{{ record.house.house_number }} - {{ record.house.building_wing }}</td>
+                                <td>{{ record.month_year }}</td>
+                                <td>₹{{ "%.2f"|format(record.amount) }}</td>
+                                <td>
+                                    <span class="status-badge status-{{ record.payment_status.lower() }}">
+                                        {{ record.payment_status }}
+                                    </span>
+                                </td>
+                                <td>{{ record.created_at.strftime('%d/%m/%Y') }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center text-muted py-4">
+                    <i class="fas fa-inbox fa-3x mb-3"></i>
+                    <p>No maintenance records found.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-tools"></i> Quick Actions
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('add_house') }}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Add House
+                    </a>
+                    <a href="{{ url_for('add_member') }}" class="btn btn-success">
+                        <i class="fas fa-user-plus"></i> Add Member
+                    </a>
+                    <a href="{{ url_for('add_maintenance') }}" class="btn btn-warning">
+                        <i class="fas fa-money-bill-wave"></i> Add Maintenance
+                    </a>
+                    <a href="{{ url_for('houses') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-list"></i> View All Houses
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-info-circle"></i> System Info
+                </h5>
+            </div>
+            <div class="card-body">
+                <p><strong>Version:</strong> 1.0.0</p>
+                <p><strong>Last Updated:</strong> 2024-01-15</p>
+                <p><strong>Admin User:</strong> {{ session.username }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-user"></i> Member Dashboard
+                </h5>
+            </div>
+            <div class="card-body text-center">
+                <i class="fas fa-user-circle fa-5x text-muted mb-3"></i>
+                <h4>Welcome, {{ session.username }}!</h4>
+                <p class="text-muted">You are logged in as a member. Contact your society admin for access to member-specific features.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

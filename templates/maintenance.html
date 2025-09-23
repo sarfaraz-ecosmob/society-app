@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+
+{% block title %}Maintenance - Society Maintenance App{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="container">
+        <h1><i class="fas fa-money-bill-wave"></i> Maintenance Management</h1>
+        <p>Track maintenance payments and generate receipts</p>
+    </div>
+</div>
+
+<div class="action-buttons">
+    <a href="{{ url_for('add_maintenance') }}" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Add Maintenance Record
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">
+            <i class="fas fa-list"></i> All Maintenance Records
+        </h5>
+    </div>
+    <div class="card-body">
+        {% if maintenance_records %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>House</th>
+                        <th>Month/Year</th>
+                        <th>Amount</th>
+                        <th>Paid Amount</th>
+                        <th>Status</th>
+                        <th>Payment Date</th>
+                        <th>Receipt</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for record in maintenance_records %}
+                    <tr>
+                        <td><strong>{{ record.house.house_number }} - {{ record.house.building_wing }}</strong></td>
+                        <td>{{ record.month_year }}</td>
+                        <td>₹{{ "%.2f"|format(record.amount) }}</td>
+                        <td>₹{{ "%.2f"|format(record.paid_amount) }}</td>
+                        <td>
+                            <span class="status-badge status-{{ record.payment_status.lower() }}">
+                                {{ record.payment_status }}
+                            </span>
+                        </td>
+                        <td>{{ record.payment_date.strftime('%d/%m/%Y') if record.payment_date else 'N/A' }}</td>
+                        <td>
+                            {% if record.receipt_number %}
+                                <span class="badge bg-success">{{ record.receipt_number }}</span>
+                            {% else %}
+                                <span class="text-muted">N/A</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if record.payment_status != 'Paid' %}
+                            <button type="button" class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#paymentModal{{ record.id }}">
+                                <i class="fas fa-check"></i> Mark Paid
+                            </button>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    
+                    <!-- Payment Modal -->
+                    <div class="modal fade" id="paymentModal{{ record.id }}" tabindex="-1">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Mark Payment Received</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <form method="POST" action="{{ url_for('mark_maintenance_paid', maintenance_id=record.id) }}">
+                                    <div class="modal-body">
+                                        <div class="mb-3">
+                                            <label class="form-label">House: {{ record.house.house_number }} - {{ record.house.building_wing }}</label>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Month/Year: {{ record.month_year }}</label>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Total Amount: ₹{{ "%.2f"|format(record.amount) }}</label>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="paid_amount{{ record.id }}" class="form-label">Paid Amount *</label>
+                                            <input type="number" class="form-control" id="paid_amount{{ record.id }}" name="paid_amount" 
+                                                   min="0" max="{{ record.amount }}" step="0.01" required>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                        <button type="submit" class="btn btn-success">Mark Paid</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center text-muted py-5">
+            <i class="fas fa-money-bill-wave fa-3x mb-3"></i>
+            <h5>No maintenance records found</h5>
+            <p>Start by adding your first maintenance record.</p>
+            <a href="{{ url_for('add_maintenance') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Add First Record
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
