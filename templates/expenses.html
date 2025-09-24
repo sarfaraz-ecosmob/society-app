@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block title %}Expenses - Society Maintenance App{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="container">
+        <h1><i class="fas fa-receipt"></i> Expense Management</h1>
+        <p>Track and manage society expenses</p>
+    </div>
+</div>
+
+<div class="action-buttons">
+    <a href="{{ url_for('add_expense') }}" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Add Expense
+    </a>
+    <a href="{{ url_for('expense_report') }}" class="btn btn-info">
+        <i class="fas fa-chart-bar"></i> Generate Report
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">
+            <i class="fas fa-list"></i> All Expenses
+        </h5>
+    </div>
+    <div class="card-body">
+        {% if expenses %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Category</th>
+                        <th>Description</th>
+                        <th>Amount</th>
+                        <th>Created By</th>
+                        <th>Created At</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for expense in expenses %}
+                    <tr>
+                        <td>{{ expense.expense_date.strftime('%d/%m/%Y') }}</td>
+                        <td>
+                            <span class="badge bg-info">{{ expense.category }}</span>
+                        </td>
+                        <td>{{ expense.description }}</td>
+                        <td class="text-danger">
+                            <strong>-₹{{ "%.2f"|format(expense.amount) }}</strong>
+                        </td>
+                        <td>{{ expense.creator.username }}</td>
+                        <td>{{ expense.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Summary Section -->
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <div class="card bg-light">
+                    <div class="card-body">
+                        <h6 class="card-title">Total Expenses</h6>
+                        <h4 class="text-danger">₹{{ "%.2f"|format(expenses|sum(attribute='amount')) }}</h4>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card bg-light">
+                    <div class="card-body">
+                        <h6 class="card-title">Total Records</h6>
+                        <h4 class="text-info">{{ expenses|length }}</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="text-center text-muted py-5">
+            <i class="fas fa-receipt fa-3x mb-3"></i>
+            <h5>No expenses recorded yet</h5>
+            <p>Start tracking your society expenses to maintain proper fund management.</p>
+            <a href="{{ url_for('add_expense') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Add First Expense
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

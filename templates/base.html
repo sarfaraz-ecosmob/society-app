@@ -55,6 +55,18 @@
                             <li><a class="dropdown-item" href="{{ url_for('add_maintenance') }}">Add Record</a></li>
                         </ul>
                     </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="fundsDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-wallet"></i> Funds & Expenses
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{{ url_for('funds') }}">Fund Overview</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('expenses') }}">View Expenses</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('add_expense') }}">Add Expense</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{{ url_for('expense_report') }}">Expense Report</a></li>
+                        </ul>
+                    </li>
                     {% endif %}
                 </ul>
                 

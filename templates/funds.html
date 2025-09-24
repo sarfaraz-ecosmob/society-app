@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+
+{% block title %}Fund Overview - Society Maintenance App{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="container">
+        <h1><i class="fas fa-wallet"></i> Fund Overview</h1>
+        <p>Track society funds and recent expenses</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-line"></i> Fund Status
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="fund-display">
+                            <h2 class="text-success">₹{{ "%.2f"|format(fund.total_amount) }}</h2>
+                            <p class="text-muted">Total Available Funds</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="fund-info">
+                            <p><strong>Last Updated:</strong> 
+                                {% if fund.last_updated %}
+                                    {{ fund.last_updated.strftime('%d/%m/%Y %H:%M') }}
+                                {% else %}
+                                    Never
+                                {% endif %}
+                            </p>
+                            <p><strong>Status:</strong> 
+                                {% if fund.total_amount > 0 %}
+                                    <span class="badge bg-success">Healthy</span>
+                                {% else %}
+                                    <span class="badge bg-warning">Low Funds</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-4">
+                    <h6>Fund Sources:</h6>
+                    <ul class="list-unstyled">
+                        <li><i class="fas fa-check text-success"></i> Maintenance payments (when receipts are generated)</li>
+                        <li><i class="fas fa-check text-success"></i> Other income sources (future integration)</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-receipt"></i> Recent Expenses
+                </h5>
+                <a href="{{ url_for('expenses') }}" class="btn btn-sm btn-outline-primary">View All</a>
+            </div>
+            <div class="card-body">
+                {% if recent_expenses %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Category</th>
+                                <th>Description</th>
+                                <th>Amount</th>
+                                <th>Created By</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for expense in recent_expenses %}
+                            <tr>
+                                <td>{{ expense.expense_date.strftime('%d/%m/%Y') }}</td>
+                                <td>
+                                    <span class="badge bg-info">{{ expense.category }}</span>
+                                </td>
+                                <td>{{ expense.description }}</td>
+                                <td class="text-danger">-₹{{ "%.2f"|format(expense.amount) }}</td>
+                                <td>{{ expense.creator.username }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center text-muted py-4">
+                    <i class="fas fa-receipt fa-3x mb-3"></i>
+                    <h5>No expenses recorded yet</h5>
+                    <p>Start tracking your society expenses.</p>
+                    <a href="{{ url_for('add_expense') }}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Add First Expense
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-tools"></i> Quick Actions
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('add_expense') }}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Add Expense
+                    </a>
+                    <a href="{{ url_for('expenses') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-list"></i> View All Expenses
+                    </a>
+                    <a href="{{ url_for('expense_report') }}" class="btn btn-outline-info">
+                        <i class="fas fa-chart-bar"></i> Expense Report
+                    </a>
+                    <a href="{{ url_for('maintenance') }}" class="btn btn-outline-success">
+                        <i class="fas fa-money-bill-wave"></i> View Payments
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-info-circle"></i> Fund Information
+                </h5>
+            </div>
+            <div class="card-body">
+                <p><strong>How funds are added:</strong></p>
+                <ul class="small">
+                    <li>When maintenance payments are marked as "Paid"</li>
+                    <li>Receipt numbers are automatically generated</li>
+                    <li>Funds are immediately available for expenses</li>
+                </ul>
+                
+                <p class="mt-3"><strong>Expense Categories:</strong></p>
+                <ul class="small">
+                    <li>Electricity Bills</li>
+                    <li>Maintenance Services</li>
+                    <li>Security Services</li>
+                    <li>Water Bills</li>
+                    <li>Other Utilities</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

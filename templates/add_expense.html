@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+
+{% block title %}Add Expense - Society Maintenance App{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="container">
+        <h1><i class="fas fa-plus"></i> Add Expense</h1>
+        <p>Record a new expense from society funds</p>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-receipt"></i> Expense Details
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="category" class="form-label">
+                                    <i class="fas fa-tags"></i> Category
+                                </label>
+                                <select class="form-select" id="category" name="category" required>
+                                    <option value="">Select Category</option>
+                                    <option value="Electricity">Electricity Bills</option>
+                                    <option value="Maintenance">Maintenance Services</option>
+                                    <option value="Security">Security Services</option>
+                                    <option value="Water">Water Bills</option>
+                                    <option value="Cleaning">Cleaning Services</option>
+                                    <option value="Garden">Garden Maintenance</option>
+                                    <option value="Lift">Lift Maintenance</option>
+                                    <option value="Other">Other Utilities</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="expense_date" class="form-label">
+                                    <i class="fas fa-calendar"></i> Expense Date
+                                </label>
+                                <input type="date" class="form-control" id="expense_date" name="expense_date" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="description" class="form-label">
+                            <i class="fas fa-align-left"></i> Description
+                        </label>
+                        <textarea class="form-control" id="description" name="description" rows="3" 
+                                  placeholder="Enter detailed description of the expense..." required></textarea>
+                        <div class="form-text">Provide a clear description of what the expense was for</div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="amount" class="form-label">
+                            <i class="fas fa-rupee-sign"></i> Amount
+                        </label>
+                        <div class="input-group">
+                            <span class="input-group-text">₹</span>
+                            <input type="number" class="form-control" id="amount" name="amount" 
+                                   step="0.01" min="0.01" required>
+                        </div>
+                        <div class="form-text">Enter the amount spent (minimum ₹0.01)</div>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Add Expense
+                        </button>
+                        <a href="{{ url_for('expenses') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to Expenses
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-info-circle"></i> Expense Guidelines
+                </h6>
+            </div>
+            <div class="card-body">
+                <ul class="mb-0 small">
+                    <li><strong>Electricity:</strong> Monthly electricity bills for common areas</li>
+                    <li><strong>Maintenance:</strong> Repair and maintenance of building infrastructure</li>
+                    <li><strong>Security:</strong> Security guard salaries and related expenses</li>
+                    <li><strong>Water:</strong> Water bills for common areas and maintenance</li>
+                    <li><strong>Cleaning:</strong> Cleaning services for common areas</li>
+                    <li><strong>Garden:</strong> Garden maintenance and landscaping</li>
+                    <li><strong>Lift:</strong> Elevator maintenance and repair</li>
+                    <li><strong>Other:</strong> Any other utility or service expenses</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block scripts %}
+<script>
+// Set today's date as default
+document.addEventListener('DOMContentLoaded', function() {
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('expense_date').value = today;
+});
+
+// Amount validation
+document.getElementById('amount').addEventListener('input', function() {
+    const amount = parseFloat(this.value);
+    if (amount <= 0) {
+        this.setCustomValidity('Amount must be greater than 0');
+    } else {
+        this.setCustomValidity('');
+    }
+});
+</script>
+{% endblock %}
+{% endblock %}

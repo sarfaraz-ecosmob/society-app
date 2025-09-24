@@ -36,6 +36,7 @@
                         <th>Emergency Contact</th>
                         <th>Vehicle</th>
                         <th>Parking Slot</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -53,6 +54,20 @@
                         <td>{{ member.emergency_contact or 'N/A' }}</td>
                         <td>{{ member.vehicle_number or 'N/A' }}</td>
                         <td>{{ member.parking_slot or 'N/A' }}</td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <a href="{{ url_for('edit_member', member_id=member.id) }}" 
+                                   class="btn btn-sm btn-outline-primary" title="Edit Member">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <button type="button" class="btn btn-sm btn-outline-danger delete-member-btn" 
+                                        data-member-id="{{ member.id }}" 
+                                        data-member-name="{{ member.name }}"
+                                        title="Delete Member">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -70,4 +85,51 @@
         {% endif %}
     </div>
 </div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteMemberModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete member <strong id="memberNameToDelete"></strong>?</p>
+                <p class="text-danger"><small>This action cannot be undone.</small></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="deleteMemberForm" method="POST" style="display: inline;">
+                    <button type="submit" class="btn btn-danger">Delete Member</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const deleteButtons = document.querySelectorAll('.delete-member-btn');
+    const modal = document.getElementById('deleteMemberModal');
+    const form = document.getElementById('deleteMemberForm');
+    const memberNameSpan = document.getElementById('memberNameToDelete');
+    
+    deleteButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const memberId = this.getAttribute('data-member-id');
+            const memberName = this.getAttribute('data-member-name');
+            
+            memberNameSpan.textContent = memberName;
+            form.action = '/members/delete/' + memberId;
+            
+            // Show the modal
+            const bsModal = new bootstrap.Modal(modal);
+            bsModal.show();
+        });
+    });
+});
+</script>
 {% endblock %}

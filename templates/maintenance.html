@@ -59,16 +59,30 @@
                             {% endif %}
                         </td>
                         <td>
-                            {% if record.payment_status != 'Paid' %}
-                            <button type="button" class="btn btn-sm btn-success mark-paid-btn" 
-                                    data-record-id="{{ record.id }}"
-                                    data-house="{{ record.house.house_number }} - {{ record.house.building_wing }}"
-                                    data-month-year="{{ record.month_year }}"
-                                    data-total-amount="{{ record.amount }}"
-                                    data-bs-toggle="modal" data-bs-target="#paymentModal">
-                                <i class="fas fa-check"></i> Mark Paid
-                            </button>
-                            {% endif %}
+                            <div class="btn-group" role="group">
+                                <a href="{{ url_for('edit_maintenance', maintenance_id=record.id) }}" 
+                                   class="btn btn-sm btn-outline-primary" title="Edit Record">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                {% if record.payment_status != 'Paid' %}
+                                <button type="button" class="btn btn-sm btn-success mark-paid-btn" 
+                                        data-record-id="{{ record.id }}"
+                                        data-house="{{ record.house.house_number }} - {{ record.house.building_wing }}"
+                                        data-month-year="{{ record.month_year }}"
+                                        data-total-amount="{{ record.amount }}"
+                                        data-bs-toggle="modal" data-bs-target="#paymentModal"
+                                        title="Mark Paid">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                                {% endif %}
+                                <button type="button" class="btn btn-sm btn-outline-danger delete-maintenance-btn" 
+                                        data-record-id="{{ record.id }}" 
+                                        data-house="{{ record.house.house_number }} - {{ record.house.building_wing }}"
+                                        data-month-year="{{ record.month_year }}"
+                                        title="Delete Record">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
                         </td>
                     </tr>
                     {% endfor %}
@@ -112,6 +126,16 @@
                         <input type="number" class="form-control" id="paid_amount" name="paid_amount" 
                                min="0" step="0.01" required>
                     </div>
+                    <div class="mb-3">
+                        <label for="payment_method" class="form-label">Payment Method</label>
+                        <select class="form-select" id="payment_method" name="payment_method">
+                            <option value="Cash">Cash</option>
+                            <option value="Online">Online Payment</option>
+                            <option value="Cheque">Cheque</option>
+                            <option value="Bank Transfer">Bank Transfer</option>
+                        </select>
+                        <div class="form-text">Select the payment method used</div>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -121,14 +145,41 @@
         </div>
     </div>
 </div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteMaintenanceModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete the maintenance record for:</p>
+                <ul>
+                    <li><strong>House:</strong> <span id="houseToDelete"></span></li>
+                    <li><strong>Month/Year:</strong> <span id="monthYearToDelete"></span></li>
+                </ul>
+                <p class="text-danger"><small>This action cannot be undone.</small></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="deleteMaintenanceForm" method="POST" style="display: inline;">
+                    <button type="submit" class="btn btn-danger">Delete Record</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Payment modal functionality
     const markPaidButtons = document.querySelectorAll('.mark-paid-btn');
-    const modal = document.getElementById('paymentModal');
-    const form = document.getElementById('paymentForm');
+    const paymentModal = document.getElementById('paymentModal');
+    const paymentForm = document.getElementById('paymentForm');
     const houseLabel = document.getElementById('houseLabel');
     const monthYearLabel = document.getElementById('monthYearLabel');
     const totalAmountLabel = document.getElementById('totalAmountLabel');
@@ -147,16 +198,39 @@ document.addEventListener('DOMContentLoaded', function() {
             totalAmountLabel.textContent = 'Total Amount: ₹' + parseFloat(totalAmount).toFixed(2);
             
             // Update form action
-            form.action = '/maintenance/mark_paid/' + recordId;
+            paymentForm.action = '/maintenance/mark_paid/' + recordId;
             
             // Update input max value
             paidAmountInput.max = totalAmount;
             paidAmountInput.value = '';
             
             // Focus on the input field when modal is shown
-            modal.addEventListener('shown.bs.modal', function() {
+            paymentModal.addEventListener('shown.bs.modal', function() {
                 paidAmountInput.focus();
             }, { once: true });
+        });
+    });
+    
+    // Delete modal functionality
+    const deleteButtons = document.querySelectorAll('.delete-maintenance-btn');
+    const deleteModal = document.getElementById('deleteMaintenanceModal');
+    const deleteForm = document.getElementById('deleteMaintenanceForm');
+    const houseToDeleteSpan = document.getElementById('houseToDelete');
+    const monthYearToDeleteSpan = document.getElementById('monthYearToDelete');
+    
+    deleteButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const recordId = this.getAttribute('data-record-id');
+            const house = this.getAttribute('data-house');
+            const monthYear = this.getAttribute('data-month-year');
+            
+            houseToDeleteSpan.textContent = house;
+            monthYearToDeleteSpan.textContent = monthYear;
+            deleteForm.action = '/maintenance/delete/' + recordId;
+            
+            // Show the modal
+            const bsModal = new bootstrap.Modal(deleteModal);
+            bsModal.show();
         });
     });
 });

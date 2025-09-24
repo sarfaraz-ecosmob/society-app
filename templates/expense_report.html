@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+
+{% block title %}Expense Report - Society Maintenance App{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="container">
+        <h1><i class="fas fa-chart-bar"></i> Expense Report</h1>
+        <p>Generate detailed expense reports with date filtering</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-filter"></i> Filter Options
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="GET" id="reportForm">
+                    <div class="mb-3">
+                        <label for="from_date" class="form-label">From Date</label>
+                        <input type="date" class="form-control" id="from_date" name="from_date" 
+                               value="{{ from_date or '' }}">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="to_date" class="form-label">To Date</label>
+                        <input type="date" class="form-control" id="to_date" name="to_date" 
+                               value="{{ to_date or '' }}">
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-search"></i> Generate Report
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="clearFilters()">
+                            <i class="fas fa-times"></i> Clear Filters
+                        </button>
+                    </div>
+                </form>
+                
+                <hr>
+                
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('download_expense_report', from_date=from_date, to_date=to_date) }}" 
+                       class="btn btn-success">
+                        <i class="fas fa-download"></i> Download CSV
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-line"></i> Expense Report
+                    {% if from_date or to_date %}
+                        <small class="text-muted">
+                            ({{ from_date or 'All' }} to {{ to_date or 'All' }})
+                        </small>
+                    {% endif %}
+                </h5>
+                <span class="badge bg-info">{{ expenses|length }} records</span>
+            </div>
+            <div class="card-body">
+                {% if expenses %}
+                <!-- Summary Cards -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <h6 class="card-title">Total Amount</h6>
+                                <h4 class="text-danger">₹{{ "%.2f"|format(total_amount) }}</h4>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <h6 class="card-title">Categories</h6>
+                                <h4 class="text-info">{{ category_totals|length }}</h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Category Breakdown -->
+                {% if category_totals %}
+                <div class="mb-4">
+                    <h6>Expenses by Category</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Category</th>
+                                    <th>Amount</th>
+                                    <th>Percentage</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for category, amount in category_totals.items() %}
+                                <tr>
+                                    <td>{{ category }}</td>
+                                    <td>₹{{ "%.2f"|format(amount) }}</td>
+                                    <td>{{ "%.1f"|format((amount / total_amount) * 100) }}%</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Detailed Expenses -->
+                <h6>Detailed Expenses</h6>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Category</th>
+                                <th>Description</th>
+                                <th>Amount</th>
+                                <th>Created By</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for expense in expenses %}
+                            <tr>
+                                <td>{{ expense.expense_date.strftime('%d/%m/%Y') }}</td>
+                                <td>
+                                    <span class="badge bg-info">{{ expense.category }}</span>
+                                </td>
+                                <td>{{ expense.description }}</td>
+                                <td class="text-danger">
+                                    <strong>₹{{ "%.2f"|format(expense.amount) }}</strong>
+                                </td>
+                                <td>{{ expense.creator.username }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center text-muted py-5">
+                    <i class="fas fa-chart-bar fa-3x mb-3"></i>
+                    <h5>No expenses found</h5>
+                    <p>No expenses match your selected criteria.</p>
+                    {% if from_date or to_date %}
+                        <button class="btn btn-outline-primary" onclick="clearFilters()">
+                            <i class="fas fa-times"></i> Clear Filters
+                        </button>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block scripts %}
+<script>
+function clearFilters() {
+    document.getElementById('from_date').value = '';
+    document.getElementById('to_date').value = '';
+    document.getElementById('reportForm').submit();
+}
+
+// Set default date range (last 30 days)
+document.addEventListener('DOMContentLoaded', function() {
+    const today = new Date();
+    const thirtyDaysAgo = new Date(today.getTime() - (30 * 24 * 60 * 60 * 1000));
+    
+    if (!document.getElementById('from_date').value) {
+        document.getElementById('from_date').value = thirtyDaysAgo.toISOString().split('T')[0];
+    }
+    if (!document.getElementById('to_date').value) {
+        document.getElementById('to_date').value = today.toISOString().split('T')[0];
+    }
+});
+</script>
+{% endblock %}
+{% endblock %}
