@@ -27,6 +27,21 @@
             {% endwith %}
             
             <form method="POST">
+                <!-- Login Type Toggle -->
+                <div class="mb-4">
+                    <div class="btn-group w-100" role="group" aria-label="Login type">
+                        <input type="radio" class="btn-check" name="login_type" id="admin_login" value="admin" checked>
+                        <label class="btn btn-outline-primary" for="admin_login">
+                            <i class="fas fa-user-shield"></i> Admin Login
+                        </label>
+                        
+                        <input type="radio" class="btn-check" name="login_type" id="member_login" value="member">
+                        <label class="btn btn-outline-success" for="member_login">
+                            <i class="fas fa-home"></i> Member Login
+                        </label>
+                    </div>
+                </div>
+                
                 <div class="mb-3">
                     <label for="username" class="form-label">
                         <i class="fas fa-user"></i> Username

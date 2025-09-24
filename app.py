@@ -47,7 +47,11 @@ class User(db.Model):
     username = db.Column(db.String(80), unique=True, nullable=False)
     password_hash = db.Column(db.String(120), nullable=False)
     is_admin = db.Column(db.Boolean, default=False)
+    is_member = db.Column(db.Boolean, default=False)
+    house_id = db.Column(db.Integer, db.ForeignKey('house.id'), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    house = db.relationship('House', backref=db.backref('users', lazy=True))
 
 class House(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -143,6 +147,23 @@ class NotificationSettings(db.Model):
     @classmethod
     def get_by_type(cls, notification_type):
         return cls.query.filter_by(notification_type=notification_type, is_active=True).first()
+
+class Complaint(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text, nullable=False)
+    category = db.Column(db.String(50), nullable=False)  # plumbing, electric, security, other
+    status = db.Column(db.String(20), default='Open')  # Open, In Progress, Resolved
+    priority = db.Column(db.String(10), default='Medium')  # Low, Medium, High, Urgent
+    created_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    house_id = db.Column(db.Integer, db.ForeignKey('house.id'), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    resolved_at = db.Column(db.DateTime, nullable=True)
+    admin_notes = db.Column(db.Text, nullable=True)
+    
+    creator = db.relationship('User', backref=db.backref('complaints', lazy=True))
+    house = db.relationship('House', backref=db.backref('complaints', lazy=True))
 
 class Document(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -410,6 +431,18 @@ def admin_required(f):
         user = User.query.get(session['user_id'])
         if not user or not user.is_admin:
             flash('Admin access required', 'error')
+            return redirect(url_for('dashboard'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+def member_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'user_id' not in session:
+            return redirect(url_for('login'))
+        user = User.query.get(session['user_id'])
+        if not user or not user.is_member:
+            flash('Member access required', 'error')
             return redirect(url_for('dashboard'))
         return f(*args, **kwargs)
     return decorated_function
@@ -869,15 +902,31 @@ def login():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
+        login_type = request.form.get('login_type', 'admin')  # admin or member
         
         user = User.query.filter_by(username=username).first()
         
         if user and check_password_hash(user.password_hash, password):
-            session['user_id'] = user.id
-            session['username'] = user.username
-            session['is_admin'] = user.is_admin
-            flash('Login successful!', 'success')
-            return redirect(url_for('dashboard'))
+            # Check if user type matches login type
+            if login_type == 'admin' and user.is_admin:
+                session['user_id'] = user.id
+                session['username'] = user.username
+                session['is_admin'] = user.is_admin
+                session['is_member'] = user.is_member
+                session['login_type'] = 'admin'
+                flash('Admin login successful!', 'success')
+                return redirect(url_for('dashboard'))
+            elif login_type == 'member' and user.is_member:
+                session['user_id'] = user.id
+                session['username'] = user.username
+                session['is_admin'] = user.is_admin
+                session['is_member'] = user.is_member
+                session['login_type'] = 'member'
+                session['house_id'] = user.house_id
+                flash('Member login successful!', 'success')
+                return redirect(url_for('member_dashboard'))
+            else:
+                flash(f'Invalid login type. Please select {login_type} login.', 'error')
         else:
             flash('Invalid username or password', 'error')
     
@@ -892,7 +941,11 @@ def logout():
 @app.route('/dashboard')
 @login_required
 def dashboard():
-    # Get statistics for dashboard
+    # Redirect to appropriate dashboard based on login type
+    if session.get('login_type') == 'member':
+        return redirect(url_for('member_dashboard'))
+    
+    # Get statistics for admin dashboard
     total_houses = House.query.count()
     total_members = Member.query.count()
     total_maintenance = Maintenance.query.count()
@@ -915,6 +968,142 @@ def dashboard():
                          recent_maintenance=recent_maintenance,
                          fund=fund,
                          recent_expenses=recent_expenses)
+
+@app.route('/member/dashboard')
+@member_required
+def member_dashboard():
+    user = User.query.get(session['user_id'])
+    house = House.query.get(user.house_id)
+    
+    # Get member's maintenance records
+    maintenance_records = Maintenance.query.filter_by(house_id=user.house_id).order_by(Maintenance.month_year.desc()).all()
+    
+    # Calculate current month dues
+    current_month = datetime.now().strftime('%Y-%m')
+    current_month_record = Maintenance.query.filter_by(house_id=user.house_id, month_year=current_month).first()
+    
+    # Calculate pending dues
+    pending_records = Maintenance.query.filter_by(house_id=user.house_id, payment_status='Pending').all()
+    pending_amount = sum(record.amount for record in pending_records)
+    
+    # Get recent complaints
+    recent_complaints = Complaint.query.filter_by(created_by=user.id).order_by(Complaint.created_at.desc()).limit(5).all()
+    
+    return render_template('member_dashboard.html',
+                         user=user,
+                         house=house,
+                         maintenance_records=maintenance_records,
+                         current_month_record=current_month_record,
+                         pending_amount=pending_amount,
+                         recent_complaints=recent_complaints)
+
+@app.route('/member/maintenance')
+@member_required
+def member_maintenance():
+    user = User.query.get(session['user_id'])
+    house = House.query.get(user.house_id)
+    
+    # Get all maintenance records for this house
+    maintenance_records = Maintenance.query.filter_by(house_id=user.house_id).order_by(Maintenance.month_year.desc()).all()
+    
+    # Calculate current month dues
+    current_month = datetime.now().strftime('%Y-%m')
+    current_month_record = Maintenance.query.filter_by(house_id=user.house_id, month_year=current_month).first()
+    
+    # Calculate pending dues
+    pending_records = Maintenance.query.filter_by(house_id=user.house_id, payment_status='Pending').all()
+    pending_amount = sum(record.amount for record in pending_records)
+    
+    # Get payment history (paid records)
+    payment_history = Maintenance.query.filter_by(house_id=user.house_id, payment_status='Paid').order_by(Maintenance.payment_date.desc()).all()
+    
+    return render_template('member_maintenance.html',
+                         user=user,
+                         house=house,
+                         maintenance_records=maintenance_records,
+                         current_month_record=current_month_record,
+                         pending_amount=pending_amount,
+                         payment_history=payment_history)
+
+# Complaint System Routes
+@app.route('/member/complaints')
+@member_required
+def member_complaints():
+    user = User.query.get(session['user_id'])
+    complaints = Complaint.query.filter_by(created_by=user.id).order_by(Complaint.created_at.desc()).all()
+    return render_template('member_complaints.html', complaints=complaints, user=user)
+
+@app.route('/member/complaints/raise', methods=['GET', 'POST'])
+@member_required
+def raise_complaint():
+    user = User.query.get(session['user_id'])
+    house = House.query.get(user.house_id)
+    
+    if request.method == 'POST':
+        title = request.form.get('title', '').strip()
+        description = request.form.get('description', '').strip()
+        category = request.form.get('category', '').strip()
+        priority = request.form.get('priority', 'Medium').strip()
+        
+        if not title or not description or not category:
+            flash('Please fill in all required fields', 'error')
+            return render_template('raise_complaint.html', house=house)
+        
+        # Create complaint
+        complaint = Complaint(
+            title=title,
+            description=description,
+            category=category,
+            priority=priority,
+            created_by=user.id,
+            house_id=user.house_id
+        )
+        
+        db.session.add(complaint)
+        db.session.commit()
+        
+        # Send notification to admin (placeholder for now)
+        flash('Complaint raised successfully! Admin has been notified.', 'success')
+        return redirect(url_for('member_complaints'))
+    
+    return render_template('raise_complaint.html', house=house)
+
+@app.route('/member/profile')
+@member_required
+def member_profile():
+    user = User.query.get(session['user_id'])
+    house = House.query.get(user.house_id)
+    return render_template('member_profile.html', user=user, house=house)
+
+# Admin Complaint Management Routes
+@app.route('/admin/complaints')
+@admin_required
+def admin_complaints():
+    complaints = Complaint.query.order_by(Complaint.created_at.desc()).all()
+    return render_template('admin_complaints.html', complaints=complaints)
+
+@app.route('/admin/complaints/<int:complaint_id>/update_status', methods=['POST'])
+@admin_required
+def update_complaint_status(complaint_id):
+    complaint = Complaint.query.get_or_404(complaint_id)
+    new_status = request.form.get('status')
+    admin_notes = request.form.get('admin_notes', '').strip()
+    
+    if new_status in ['Open', 'In Progress', 'Resolved']:
+        complaint.status = new_status
+        complaint.admin_notes = admin_notes
+        complaint.updated_at = datetime.utcnow()
+        
+        if new_status == 'Resolved':
+            complaint.resolved_at = datetime.utcnow()
+        
+        db.session.commit()
+        flash(f'Complaint status updated to {new_status}', 'success')
+    else:
+        flash('Invalid status', 'error')
+    
+    return redirect(url_for('admin_complaints'))
+
 
 @app.route('/houses')
 @admin_required
@@ -979,19 +1168,58 @@ def members():
 @admin_required
 def add_member():
     if request.method == 'POST':
+        # Get form data
+        house_id = int(request.form['house_id'])
+        name = request.form['name']
+        age = int(request.form['age'])
+        gender = request.form['gender']
+        role = request.form['role']
+        emergency_contact = request.form.get('emergency_contact')
+        vehicle_number = request.form.get('vehicle_number')
+        parking_slot = request.form.get('parking_slot')
+        
+        # Get optional login credentials
+        username = request.form.get('username', '').strip()
+        password = request.form.get('password', '').strip()
+        
+        # Create member
         member = Member(
-            house_id=int(request.form['house_id']),
-            name=request.form['name'],
-            age=int(request.form['age']),
-            gender=request.form['gender'],
-            role=request.form['role'],
-            emergency_contact=request.form.get('emergency_contact'),
-            vehicle_number=request.form.get('vehicle_number'),
-            parking_slot=request.form.get('parking_slot')
+            house_id=house_id,
+            name=name,
+            age=age,
+            gender=gender,
+            role=role,
+            emergency_contact=emergency_contact,
+            vehicle_number=vehicle_number,
+            parking_slot=parking_slot
         )
         db.session.add(member)
+        db.session.flush()  # Get the member ID
+        
+        # Create member user if credentials provided
+        if username and password:
+            # Check if username already exists
+            existing_user = User.query.filter_by(username=username).first()
+            if existing_user:
+                flash(f'Username "{username}" already exists. Member added but login credentials not created.', 'warning')
+            else:
+                # Validate password length
+                if len(password) < 6:
+                    flash('Password must be at least 6 characters long. Member added but login credentials not created.', 'warning')
+                else:
+                    # Create member user
+                    member_user = User(
+                        username=username,
+                        password_hash=generate_password_hash(password),
+                        is_member=True,
+                        house_id=house_id
+                    )
+                    db.session.add(member_user)
+                    flash(f'Member "{name}" added successfully with login credentials!', 'success')
+        else:
+            flash(f'Member "{name}" added successfully!', 'success')
+        
         db.session.commit()
-        flash('Member added successfully!', 'success')
         return redirect(url_for('members'))
     
     houses = House.query.all()

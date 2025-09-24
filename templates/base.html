@@ -22,6 +22,32 @@
             
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
+                    {% if session.login_type == 'member' %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('member_dashboard') }}">
+                            <i class="fas fa-tachometer-alt"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('member_maintenance') }}">
+                            <i class="fas fa-money-bill-wave"></i> Maintenance
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="complaintsDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-tools"></i> Complaints
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{{ url_for('member_complaints') }}">My Complaints</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('raise_complaint') }}">Raise Complaint</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('member_profile') }}">
+                            <i class="fas fa-user"></i> My Profile
+                        </a>
+                    </li>
+                    {% else %}
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('dashboard') }}">
                             <i class="fas fa-tachometer-alt"></i> Dashboard
@@ -68,15 +94,6 @@
                         </ul>
                     </li>
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="notificationsDropdown" role="button" data-bs-toggle="dropdown">
-                            <i class="fas fa-bell"></i> Notifications
-                        </a>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="{{ url_for('notifications') }}">Notification Settings</a></li>
-                            <li><a class="dropdown-item" href="{{ url_for('add_notification_settings') }}">Add Settings</a></li>
-                        </ul>
-                    </li>
-                    <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="documentsDropdown" role="button" data-bs-toggle="dropdown">
                             <i class="fas fa-file-alt"></i> Documents
                         </a>
@@ -85,6 +102,12 @@
                             <li><a class="dropdown-item" href="{{ url_for('upload_document') }}">Upload Document</a></li>
                         </ul>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin_complaints') }}">
+                            <i class="fas fa-tools"></i> Complaints
+                        </a>
+                    </li>
+                    {% endif %}
                     {% endif %}
                 </ul>
                 
@@ -97,6 +120,12 @@
                             {% if session.is_admin %}
                             <li><a class="dropdown-item" href="{{ url_for('change_password') }}">
                                 <i class="fas fa-key"></i> Change Password
+                            </a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('notifications') }}">
+                                <i class="fas fa-bell"></i> Notification Settings
+                            </a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('add_notification_settings') }}">
+                                <i class="fas fa-plus"></i> Add Notification Settings
                             </a></li>
                             <li><hr class="dropdown-divider"></li>
                             {% endif %}

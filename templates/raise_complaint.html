@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+
+{% block title %}Raise Complaint - Society App{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-plus"></i> Raise New Complaint</h2>
+                <a href="{{ url_for('member_complaints') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Complaints
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-tools"></i> Complaint Form</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <div class="mb-3">
+                            <label for="title" class="form-label">
+                                <i class="fas fa-heading"></i> Complaint Title <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control" id="title" name="title" required 
+                                   placeholder="Brief description of the issue">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="category" class="form-label">
+                                <i class="fas fa-tags"></i> Category <span class="text-danger">*</span>
+                            </label>
+                            <select class="form-select" id="category" name="category" required>
+                                <option value="">Select Category</option>
+                                <option value="plumbing">Plumbing</option>
+                                <option value="electric">Electric</option>
+                                <option value="security">Security</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="priority" class="form-label">
+                                <i class="fas fa-exclamation-triangle"></i> Priority
+                            </label>
+                            <select class="form-select" id="priority" name="priority">
+                                <option value="Low">Low</option>
+                                <option value="Medium" selected>Medium</option>
+                                <option value="High">High</option>
+                                <option value="Urgent">Urgent</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="description" class="form-label">
+                                <i class="fas fa-align-left"></i> Detailed Description <span class="text-danger">*</span>
+                            </label>
+                            <textarea class="form-control" id="description" name="description" rows="5" required 
+                                      placeholder="Please provide detailed information about the issue..."></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h6><i class="fas fa-info-circle"></i> House Information</h6>
+                                    <p class="mb-0">
+                                        <strong>House:</strong> {{ house.house_number }} - {{ house.building_wing }}<br>
+                                        <strong>Owner:</strong> {{ house.owner_name }}<br>
+                                        <strong>Contact:</strong> {{ house.contact_number }}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{{ url_for('member_complaints') }}" class="btn btn-secondary me-md-2">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-paper-plane"></i> Submit Complaint
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Help Information -->
+    <div class="row justify-content-center mt-4">
+        <div class="col-md-8">
+            <div class="card border-info">
+                <div class="card-header bg-info text-white">
+                    <h6><i class="fas fa-lightbulb"></i> Tips for Effective Complaints</h6>
+                </div>
+                <div class="card-body">
+                    <ul class="mb-0">
+                        <li><strong>Be Specific:</strong> Provide clear details about the issue</li>
+                        <li><strong>Choose Right Category:</strong> Select the most appropriate category</li>
+                        <li><strong>Set Priority:</strong> Use Urgent only for safety-related issues</li>
+                        <li><strong>Include Location:</strong> Mention specific area if applicable</li>
+                        <li><strong>Admin Notification:</strong> Admin will be automatically notified</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

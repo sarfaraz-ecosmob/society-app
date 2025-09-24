@@ -1,0 +1,212 @@
+{% extends "base.html" %}
+
+{% block title %}My Maintenance - Society App{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-money-bill-wave"></i> My Maintenance</h2>
+                <div class="text-muted">
+                    {{ house.house_number }} - {{ house.building_wing }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="card-title">Current Month Dues</h4>
+                            <h2>₹{{ current_month_record.amount if current_month_record else 0 }}</h2>
+                            {% if current_month_record %}
+                                <small>{{ current_month_record.month_year }}</small>
+                            {% endif %}
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-calendar-alt fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="card-title">Pending Dues</h4>
+                            <h2>₹{{ pending_amount }}</h2>
+                            <small>Total Outstanding</small>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-exclamation-triangle fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="card-title">Paid Records</h4>
+                            <h2>{{ payment_history|length }}</h2>
+                            <small>Total Payments</small>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-check-circle fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pay Now Button (for future payment gateway integration) -->
+    {% if pending_amount > 0 %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-success">
+                <div class="card-body text-center">
+                    <h5 class="card-title text-success">
+                        <i class="fas fa-credit-card"></i> Pay Outstanding Dues
+                    </h5>
+                    <p class="card-text">Total Outstanding Amount: <strong>₹{{ pending_amount }}</strong></p>
+                    <button class="btn btn-success btn-lg" disabled>
+                        <i class="fas fa-lock"></i> Pay Now (Coming Soon)
+                    </button>
+                    <small class="d-block text-muted mt-2">
+                        Payment gateway integration will be available soon
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Payment History -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-history"></i> Payment History</h5>
+                </div>
+                <div class="card-body">
+                    {% if payment_history %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Month/Year</th>
+                                        <th>Amount</th>
+                                        <th>Payment Date</th>
+                                        <th>Payment Mode</th>
+                                        <th>Receipt No.</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for record in payment_history %}
+                                    <tr>
+                                        <td>{{ record.month_year }}</td>
+                                        <td>₹{{ record.paid_amount }}</td>
+                                        <td>{{ record.payment_date.strftime('%d/%m/%Y') if record.payment_date else 'N/A' }}</td>
+                                        <td>{{ record.payment_method }}</td>
+                                        <td>{{ record.receipt_number or 'N/A' }}</td>
+                                        <td>
+                                            {% if record.receipt_number %}
+                                                <button class="btn btn-sm btn-outline-primary" onclick="downloadReceipt({{ record.id }})">
+                                                    <i class="fas fa-download"></i> Download Receipt
+                                                </button>
+                                            {% else %}
+                                                <span class="text-muted">No Receipt</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-receipt fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">No payment history found.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- All Maintenance Records -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-list"></i> All Maintenance Records</h5>
+                </div>
+                <div class="card-body">
+                    {% if maintenance_records %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Month/Year</th>
+                                        <th>Amount</th>
+                                        <th>Paid Amount</th>
+                                        <th>Status</th>
+                                        <th>Payment Date</th>
+                                        <th>Payment Mode</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for record in maintenance_records %}
+                                    <tr>
+                                        <td>{{ record.month_year }}</td>
+                                        <td>₹{{ record.amount }}</td>
+                                        <td>₹{{ record.paid_amount }}</td>
+                                        <td>
+                                            {% if record.payment_status == 'Paid' %}
+                                                <span class="badge bg-success">Paid</span>
+                                            {% elif record.payment_status == 'Partial' %}
+                                                <span class="badge bg-warning">Partial</span>
+                                            {% else %}
+                                                <span class="badge bg-danger">Pending</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ record.payment_date.strftime('%d/%m/%Y') if record.payment_date else 'N/A' }}</td>
+                                        <td>{{ record.payment_method }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-file-alt fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">No maintenance records found.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function downloadReceipt(maintenanceId) {
+    // For now, show an alert. In future, this will download the actual receipt
+    alert('Receipt download functionality will be implemented soon!');
+    // Future implementation: window.open('/member/receipt/' + maintenanceId, '_blank');
+}
+</script>
+{% endblock %}
