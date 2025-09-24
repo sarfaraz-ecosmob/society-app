@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Document - Society Maintenance App{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="container">
+        <h1><i class="fas fa-edit"></i> Edit Document</h1>
+        <p>Update document information</p>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-file-edit"></i> Edit Document Information
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" id="editForm">
+                    <div class="mb-3">
+                        <label for="title" class="form-label">Document Title *</label>
+                        <input type="text" class="form-control" id="title" name="title" 
+                               value="{{ document.title }}" required>
+                        <div class="form-text">Enter a descriptive title for the document</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="document_type" class="form-label">Document Type *</label>
+                        <select class="form-select" id="document_type" name="document_type" required>
+                            <option value="">Select document type...</option>
+                            <option value="Legal" {{ 'selected' if document.document_type == 'Legal' else '' }}>Legal Documents</option>
+                            <option value="Financial" {{ 'selected' if document.document_type == 'Financial' else '' }}>Financial Reports</option>
+                            <option value="Meeting Minutes" {{ 'selected' if document.document_type == 'Meeting Minutes' else '' }}>Meeting Minutes</option>
+                            <option value="Maintenance" {{ 'selected' if document.document_type == 'Maintenance' else '' }}>Maintenance Reports</option>
+                            <option value="Policy" {{ 'selected' if document.document_type == 'Policy' else '' }}>Policy Documents</option>
+                            <option value="Notice" {{ 'selected' if document.document_type == 'Notice' else '' }}>Society Notices</option>
+                            <option value="Other" {{ 'selected' if document.document_type == 'Other' else '' }}>Other</option>
+                        </select>
+                        <div class="form-text">Choose the appropriate category for this document</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        <textarea class="form-control" id="description" name="description" rows="3" 
+                                  placeholder="Optional description of the document content">{{ document.description or '' }}</textarea>
+                        <div class="form-text">Provide additional details about the document (optional)</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Current File</label>
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center">
+                                    <i class="{{ get_file_icon(document.file_extension) }} fa-2x me-3"></i>
+                                    <div>
+                                        <h6 class="mb-1">{{ document.original_file_name }}</h6>
+                                        <small class="text-muted">
+                                            {{ document.file_size_formatted }} • 
+                                            {{ document.file_extension.upper() }} • 
+                                            Uploaded {{ document.upload_date.strftime('%d/%m/%Y') }}
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-text">File cannot be changed. To upload a new file, delete this document and upload a new one.</div>
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('documents') }}" class="btn btn-secondary me-md-2">
+                            <i class="fas fa-times"></i> Cancel
+                        </a>
+                        <a href="{{ url_for('view_document', document_id=document.id) }}" 
+                           class="btn btn-info me-md-2" target="_blank">
+                            <i class="fas fa-eye"></i> View Document
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Update Document
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row justify-content-center mt-4">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-info-circle"></i> Document Information
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-user text-primary"></i> Upload Information</h6>
+                        <ul class="text-muted small">
+                            <li><strong>Uploaded by:</strong> {{ document.uploader.username }}</li>
+                            <li><strong>Upload date:</strong> {{ document.upload_date.strftime('%d/%m/%Y %H:%M') }}</li>
+                            <li><strong>File size:</strong> {{ document.file_size_formatted }}</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-cog text-success"></i> File Actions</h6>
+                        <div class="d-grid gap-2">
+                            <a href="{{ url_for('view_document', document_id=document.id) }}" 
+                               class="btn btn-sm btn-outline-primary" target="_blank">
+                                <i class="fas fa-eye"></i> View Document
+                            </a>
+                            <a href="{{ url_for('download_document', document_id=document.id) }}" 
+                               class="btn btn-sm btn-outline-success">
+                                <i class="fas fa-download"></i> Download Document
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Form validation
+    document.getElementById('editForm').addEventListener('submit', function(e) {
+        const title = document.getElementById('title').value.trim();
+        const documentType = document.getElementById('document_type').value;
+        
+        if (!title) {
+            e.preventDefault();
+            alert('Please enter a document title');
+            document.getElementById('title').focus();
+            return;
+        }
+        
+        if (!documentType) {
+            e.preventDefault();
+            alert('Please select a document type');
+            document.getElementById('document_type').focus();
+            return;
+        }
+    });
+});
+</script>
+{% endblock %}

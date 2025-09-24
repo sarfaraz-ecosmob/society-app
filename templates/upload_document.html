@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+
+{% block title %}Upload Document - Society Maintenance App{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="container">
+        <h1><i class="fas fa-upload"></i> Upload Document</h1>
+        <p>Upload a new document to the society document management system</p>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-file-upload"></i> Document Upload Form
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" enctype="multipart/form-data" id="uploadForm">
+                    <div class="mb-3">
+                        <label for="title" class="form-label">Document Title *</label>
+                        <input type="text" class="form-control" id="title" name="title" 
+                               placeholder="e.g., Annual General Meeting Minutes 2024" required>
+                        <div class="form-text">Enter a descriptive title for the document</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="document_type" class="form-label">Document Type *</label>
+                        <select class="form-select" id="document_type" name="document_type" required>
+                            <option value="">Select document type...</option>
+                            <option value="Legal">Legal Documents</option>
+                            <option value="Financial">Financial Reports</option>
+                            <option value="Meeting Minutes">Meeting Minutes</option>
+                            <option value="Maintenance">Maintenance Reports</option>
+                            <option value="Policy">Policy Documents</option>
+                            <option value="Notice">Society Notices</option>
+                            <option value="Other">Other</option>
+                        </select>
+                        <div class="form-text">Choose the appropriate category for this document</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        <textarea class="form-control" id="description" name="description" rows="3" 
+                                  placeholder="Optional description of the document content"></textarea>
+                        <div class="form-text">Provide additional details about the document (optional)</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="file" class="form-label">Select File *</label>
+                        <input type="file" class="form-control" id="file" name="file" 
+                               accept=".pdf,.png,.jpg,.jpeg,.gif,.doc,.docx,.txt,.xlsx,.xls" required>
+                        <div class="form-text">
+                            <strong>Supported formats:</strong> PDF, PNG, JPG, JPEG, GIF, DOC, DOCX, TXT, XLS, XLSX<br>
+                            <strong>Maximum file size:</strong> 16MB
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i>
+                            <strong>File Security:</strong> All uploaded files are scanned for security and stored securely. 
+                            Only authorized users can access these documents.
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('documents') }}" class="btn btn-secondary me-md-2">
+                            <i class="fas fa-times"></i> Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-upload"></i> Upload Document
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row justify-content-center mt-4">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-lightbulb"></i> Upload Tips
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-check-circle text-success"></i> Best Practices</h6>
+                        <ul class="text-muted small">
+                            <li>Use descriptive titles</li>
+                            <li>Choose appropriate document type</li>
+                            <li>Add helpful descriptions</li>
+                            <li>Use standard file formats</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-exclamation-triangle text-warning"></i> Important Notes</h6>
+                        <ul class="text-muted small">
+                            <li>Files are automatically renamed for security</li>
+                            <li>Original filename is preserved for downloads</li>
+                            <li>Upload date and user are tracked</li>
+                            <li>Files can be edited or deleted later</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const fileInput = document.getElementById('file');
+    const uploadForm = document.getElementById('uploadForm');
+    
+    // File size validation
+    fileInput.addEventListener('change', function() {
+        const file = this.files[0];
+        if (file) {
+            const maxSize = 16 * 1024 * 1024; // 16MB
+            if (file.size > maxSize) {
+                alert('File size exceeds 16MB limit. Please choose a smaller file.');
+                this.value = '';
+                return;
+            }
+            
+            // Show file info
+            const fileSize = (file.size / 1024 / 1024).toFixed(2);
+            console.log(`Selected file: ${file.name} (${fileSize} MB)`);
+        }
+    });
+    
+    // Form validation
+    uploadForm.addEventListener('submit', function(e) {
+        const title = document.getElementById('title').value.trim();
+        const documentType = document.getElementById('document_type').value;
+        const file = document.getElementById('file').files[0];
+        
+        if (!title) {
+            e.preventDefault();
+            alert('Please enter a document title');
+            document.getElementById('title').focus();
+            return;
+        }
+        
+        if (!documentType) {
+            e.preventDefault();
+            alert('Please select a document type');
+            document.getElementById('document_type').focus();
+            return;
+        }
+        
+        if (!file) {
+            e.preventDefault();
+            alert('Please select a file to upload');
+            document.getElementById('file').focus();
+            return;
+        }
+        
+        // Show upload progress
+        const submitBtn = this.querySelector('button[type="submit"]');
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
+        submitBtn.disabled = true;
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,186 @@
+{% extends "base.html" %}
+
+{% block title %}Add Notification Settings - Society Maintenance App{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="container">
+        <h1><i class="fas fa-plus"></i> Add Notification Settings</h1>
+        <p>Configure notification settings for sending maintenance receipts</p>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-cog"></i> Notification Configuration
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" id="notificationForm">
+                    <div class="mb-3">
+                        <label for="notification_type" class="form-label">Notification Type *</label>
+                        <select class="form-select" id="notification_type" name="notification_type" required>
+                            <option value="">Select notification type...</option>
+                            <option value="smtp">SMTP Email</option>
+                            <option value="whatsapp">WhatsApp</option>
+                        </select>
+                        <div class="form-text">Choose the type of notification service to configure</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="sender_name" class="form-label">Sender Name *</label>
+                        <input type="text" class="form-control" id="sender_name" name="sender_name" 
+                               placeholder="e.g., Society Management" required>
+                        <div class="form-text">Name that will appear as the sender</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="sender_email" class="form-label">Sender Email *</label>
+                        <input type="email" class="form-control" id="sender_email" name="sender_email" 
+                               placeholder="e.g., admin@society.com" required>
+                        <div class="form-text">Email address for the sender</div>
+                    </div>
+
+                    <!-- SMTP Configuration -->
+                    <div id="smtp_config" style="display: none;">
+                        <hr>
+                        <h6><i class="fas fa-envelope text-success"></i> SMTP Configuration</h6>
+                        
+                        <div class="mb-3">
+                            <label for="smtp_server" class="form-label">SMTP Server *</label>
+                            <input type="text" class="form-control" id="smtp_server" name="smtp_server" 
+                                   placeholder="e.g., smtp.gmail.com" required>
+                            <div class="form-text">SMTP server address (e.g., smtp.gmail.com, smtp-mail.outlook.com)</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="smtp_port" class="form-label">SMTP Port *</label>
+                            <input type="number" class="form-control" id="smtp_port" name="smtp_port" 
+                                   value="587" min="1" max="65535">
+                            <div class="form-text">SMTP server port (587 for TLS, 465 for SSL)</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="smtp_username" class="form-label">SMTP Username *</label>
+                            <input type="text" class="form-control" id="smtp_username" name="smtp_username" 
+                                   placeholder="e.g., your-email@gmail.com" required>
+                            <div class="form-text">SMTP authentication username (usually your email address)</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="smtp_password" class="form-label">SMTP Password *</label>
+                            <input type="password" class="form-control" id="smtp_password" name="smtp_password" 
+                                   placeholder="Enter SMTP password" required>
+                            <div class="form-text">SMTP authentication password (use App Password for Gmail)</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="smtp_use_tls" name="smtp_use_tls" checked>
+                                <label class="form-check-label" for="smtp_use_tls">
+                                    Use TLS Encryption
+                                </label>
+                            </div>
+                            <div class="form-text">Enable TLS encryption for secure connection</div>
+                        </div>
+                    </div>
+
+                    <!-- WhatsApp Configuration -->
+                    <div id="whatsapp_config" style="display: none;">
+                        <hr>
+                        <h6><i class="fab fa-whatsapp text-success"></i> WhatsApp Configuration</h6>
+                        
+                        <div class="mb-3">
+                            <label for="whatsapp_api_url" class="form-label">WhatsApp API URL *</label>
+                            <input type="url" class="form-control" id="whatsapp_api_url" name="whatsapp_api_url" 
+                                   placeholder="e.g., https://api.whatsapp.com/send">
+                            <div class="form-text">WhatsApp API endpoint URL</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="whatsapp_api_key" class="form-label">WhatsApp API Key *</label>
+                            <input type="text" class="form-control" id="whatsapp_api_key" name="whatsapp_api_key" 
+                                   placeholder="Enter API key">
+                            <div class="form-text">API key for WhatsApp service authentication</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="whatsapp_phone_number" class="form-label">Test Phone Number *</label>
+                            <input type="tel" class="form-control" id="whatsapp_phone_number" name="whatsapp_phone_number" 
+                                   placeholder="e.g., +1234567890">
+                            <div class="form-text">Phone number for testing WhatsApp connection</div>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('notifications') }}" class="btn btn-secondary me-md-2">
+                            <i class="fas fa-times"></i> Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Save Settings
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const notificationTypeSelect = document.getElementById('notification_type');
+    const smtpConfig = document.getElementById('smtp_config');
+    const whatsappConfig = document.getElementById('whatsapp_config');
+    
+    // Show/hide configuration sections based on notification type
+    notificationTypeSelect.addEventListener('change', function() {
+        const selectedType = this.value;
+        
+        // Hide all config sections
+        smtpConfig.style.display = 'none';
+        whatsappConfig.style.display = 'none';
+        
+        // Show relevant config section
+        if (selectedType === 'smtp') {
+            smtpConfig.style.display = 'block';
+        } else if (selectedType === 'whatsapp') {
+            whatsappConfig.style.display = 'block';
+        }
+    });
+    
+    // Form validation
+    document.getElementById('notificationForm').addEventListener('submit', function(e) {
+        const notificationType = notificationTypeSelect.value;
+        
+        if (notificationType === 'smtp') {
+            const requiredFields = ['smtp_server', 'smtp_port', 'smtp_username', 'smtp_password'];
+            for (const field of requiredFields) {
+                const input = document.getElementById(field);
+                if (!input.value.trim()) {
+                    e.preventDefault();
+                    alert(`Please fill in the ${field.replace('_', ' ')} field`);
+                    input.focus();
+                    return;
+                }
+            }
+        } else if (notificationType === 'whatsapp') {
+            const requiredFields = ['whatsapp_api_url', 'whatsapp_api_key', 'whatsapp_phone_number'];
+            for (const field of requiredFields) {
+                const input = document.getElementById(field);
+                if (!input.value.trim()) {
+                    e.preventDefault();
+                    alert(`Please fill in the ${field.replace('_', ' ')} field`);
+                    input.focus();
+                    return;
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

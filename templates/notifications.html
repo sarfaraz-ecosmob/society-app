@@ -1,0 +1,298 @@
+{% extends "base.html" %}
+
+{% block title %}Notification Settings - Society Maintenance App{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="container">
+        <h1><i class="fas fa-bell"></i> Notification Settings</h1>
+        <p>Configure SMTP and WhatsApp notification settings for sending receipts</p>
+    </div>
+</div>
+
+<div class="action-buttons">
+    <a href="{{ url_for('add_notification_settings') }}" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Add Notification Settings
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">
+            <i class="fas fa-cog"></i> Current Notification Settings
+        </h5>
+    </div>
+    <div class="card-body">
+        {% if settings %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Type</th>
+                        <th>Status</th>
+                        <th>Sender Name</th>
+                        <th>Sender Email</th>
+                        <th>Server/API</th>
+                        <th>Created</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for setting in settings %}
+                    <tr>
+                        <td>
+                            <span class="badge bg-{{ 'success' if setting.notification_type == 'smtp' else 'info' }}">
+                                {{ setting.notification_type.upper() }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if setting.is_active %}
+                                <span class="badge bg-success">Active</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Inactive</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ setting.sender_name or 'N/A' }}</td>
+                        <td>{{ setting.sender_email or 'N/A' }}</td>
+                        <td>
+                            {% if setting.notification_type == 'smtp' %}
+                                {{ setting.smtp_server or 'N/A' }}
+                            {% else %}
+                                {{ setting.whatsapp_api_url or 'N/A' }}
+                            {% endif %}
+                        </td>
+                        <td>{{ setting.created_at.strftime('%d/%m/%Y') }}</td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <a href="{{ url_for('edit_notification_settings', setting_id=setting.id) }}" 
+                                   class="btn btn-sm btn-outline-primary" title="Edit Settings">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="{{ url_for('test_notification_settings', setting_id=setting.id) }}" 
+                                   class="btn btn-sm btn-outline-info" title="Test Connection">
+                                    <i class="fas fa-vial"></i>
+                                </a>
+                                {% if setting.notification_type == 'smtp' %}
+                                <button type="button" class="btn btn-sm btn-outline-success send-test-email-btn" 
+                                        data-setting-id="{{ setting.id }}" title="Send Test Email">
+                                    <i class="fas fa-envelope"></i>
+                                </button>
+                                {% endif %}
+                                <a href="{{ url_for('debug_notification_settings', setting_id=setting.id) }}" 
+                                   class="btn btn-sm btn-outline-warning" title="Debug Settings">
+                                    <i class="fas fa-bug"></i>
+                                </a>
+                                {% if setting.notification_type == 'smtp' %}
+                                <a href="{{ url_for('simple_test_smtp', setting_id=setting.id) }}" 
+                                   class="btn btn-sm btn-outline-secondary" title="Simple Test">
+                                    <i class="fas fa-flask"></i>
+                                </a>
+                                <a href="{{ url_for('show_raw_data', setting_id=setting.id) }}" 
+                                   class="btn btn-sm btn-outline-dark" title="Raw Data">
+                                    <i class="fas fa-database"></i>
+                                </a>
+                                <a href="{{ url_for('custom_test_smtp', setting_id=setting.id) }}" 
+                                   class="btn btn-sm btn-outline-primary" title="Custom Test">
+                                    <i class="fas fa-paper-plane"></i>
+                                </a>
+                                {% endif %}
+                                {% if not setting.is_active %}
+                                <a href="{{ url_for('activate_notification_settings', setting_id=setting.id) }}" 
+                                   class="btn btn-sm btn-success" title="Activate">
+                                    <i class="fas fa-check"></i>
+                                </a>
+                                {% endif %}
+                                <button type="button" class="btn btn-sm btn-outline-danger delete-notification-btn" 
+                                        data-setting-id="{{ setting.id }}" 
+                                        data-notification-type="{{ setting.notification_type }}"
+                                        title="Delete Settings">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center text-muted py-5">
+            <i class="fas fa-bell fa-3x mb-3"></i>
+            <h5>No notification settings configured</h5>
+            <p>Add notification settings to enable automatic receipt sending.</p>
+            <a href="{{ url_for('add_notification_settings') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Add First Settings
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="card mt-4">
+    <div class="card-header">
+        <h5 class="mb-0">
+            <i class="fas fa-info-circle"></i> Notification Types & Troubleshooting
+        </h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <h6><i class="fas fa-envelope text-success"></i> SMTP Email</h6>
+                <p class="text-muted">Send receipts via email using SMTP server configuration.</p>
+                
+                <h6 class="mt-3">Common SMTP Settings:</h6>
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Provider</th>
+                                <th>Server</th>
+                                <th>Port</th>
+                                <th>TLS</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Gmail</td>
+                                <td>smtp.gmail.com</td>
+                                <td>587</td>
+                                <td>Yes</td>
+                            </tr>
+                            <tr>
+                                <td>Outlook</td>
+                                <td>smtp-mail.outlook.com</td>
+                                <td>587</td>
+                                <td>Yes</td>
+                            </tr>
+                            <tr>
+                                <td>Yahoo</td>
+                                <td>smtp.mail.yahoo.com</td>
+                                <td>587</td>
+                                <td>Yes</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <h6 class="mt-3">Troubleshooting:</h6>
+                <ul class="text-muted small">
+                    <li><strong>Gmail:</strong> Enable 2FA and use App Password</li>
+                    <li><strong>Empty server error:</strong> Check SMTP server field is not empty</li>
+                    <li><strong>Authentication failed:</strong> Verify username/password</li>
+                    <li><strong>Connection failed:</strong> Check server address and port</li>
+                </ul>
+            </div>
+            <div class="col-md-6">
+                <h6><i class="fab fa-whatsapp text-success"></i> WhatsApp</h6>
+                <p class="text-muted">Send receipts via WhatsApp using API integration.</p>
+                
+                <h6 class="mt-3">Requirements:</h6>
+                <ul class="text-muted">
+                    <li>WhatsApp API URL and key</li>
+                    <li>Phone number for testing</li>
+                    <li>Member phone numbers</li>
+                </ul>
+                
+                <h6 class="mt-3">Testing Steps:</h6>
+                <ol class="text-muted small">
+                    <li>Click "Test Connection" (vial icon) to verify settings</li>
+                    <li>For SMTP: Click "Send Test Email" (envelope icon) to send actual test email</li>
+                    <li>Check error messages for specific issues</li>
+                    <li>Ensure all required fields are filled</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteNotificationModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete the <span id="notificationTypeToDelete"></span> notification settings?</p>
+                <p class="text-danger"><small>This action cannot be undone.</small></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="deleteNotificationForm" method="POST" style="display: inline;">
+                    <button type="submit" class="btn btn-danger">Delete Settings</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Send Test Email Modal -->
+<div class="modal fade" id="sendTestEmailModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Send Test Email</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="sendTestEmailForm" method="POST">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="test_email" class="form-label">Test Email Address *</label>
+                        <input type="email" class="form-control" id="test_email" name="test_email" 
+                               placeholder="Enter email address to send test email" required>
+                        <div class="form-text">A test maintenance receipt will be sent to this email address</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">Send Test Email</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Delete modal functionality
+    const deleteButtons = document.querySelectorAll('.delete-notification-btn');
+    const deleteModal = document.getElementById('deleteNotificationModal');
+    const deleteForm = document.getElementById('deleteNotificationForm');
+    const notificationTypeToDeleteSpan = document.getElementById('notificationTypeToDelete');
+    
+    deleteButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const settingId = this.getAttribute('data-setting-id');
+            const notificationType = this.getAttribute('data-notification-type');
+            
+            notificationTypeToDeleteSpan.textContent = notificationType.toUpperCase();
+            deleteForm.action = '/notifications/delete/' + settingId;
+            
+            // Show the modal
+            const bsModal = new bootstrap.Modal(deleteModal);
+            bsModal.show();
+        });
+    });
+    
+    // Send test email modal functionality
+    const sendTestEmailButtons = document.querySelectorAll('.send-test-email-btn');
+    const sendTestEmailModal = document.getElementById('sendTestEmailModal');
+    const sendTestEmailForm = document.getElementById('sendTestEmailForm');
+    
+    sendTestEmailButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const settingId = this.getAttribute('data-setting-id');
+            
+            sendTestEmailForm.action = '/notifications/send_test_email/' + settingId;
+            
+            // Show the modal
+            const bsModal = new bootstrap.Modal(sendTestEmailModal);
+            bsModal.show();
+        });
+    });
+});
+</script>
+{% endblock %}

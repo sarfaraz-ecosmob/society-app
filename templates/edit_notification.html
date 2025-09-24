@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Notification Settings - Society Maintenance App{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="container">
+        <h1><i class="fas fa-edit"></i> Edit Notification Settings</h1>
+        <p>Update notification settings for {{ setting.notification_type.upper() }}</p>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-cog"></i> Edit {{ setting.notification_type.upper() }} Configuration
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" id="notificationForm">
+                    <div class="mb-3">
+                        <label class="form-label">Notification Type</label>
+                        <div class="form-control-plaintext">
+                            <span class="badge bg-{{ 'success' if setting.notification_type == 'smtp' else 'info' }}">
+                                {{ setting.notification_type.upper() }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="sender_name" class="form-label">Sender Name *</label>
+                        <input type="text" class="form-control" id="sender_name" name="sender_name" 
+                               value="{{ setting.sender_name or '' }}" placeholder="e.g., Society Management" required>
+                        <div class="form-text">Name that will appear as the sender</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="sender_email" class="form-label">Sender Email *</label>
+                        <input type="email" class="form-control" id="sender_email" name="sender_email" 
+                               value="{{ setting.sender_email or '' }}" placeholder="e.g., admin@society.com" required>
+                        <div class="form-text">Email address for the sender</div>
+                    </div>
+
+                    <!-- SMTP Configuration -->
+                    {% if setting.notification_type == 'smtp' %}
+                    <hr>
+                    <h6><i class="fas fa-envelope text-success"></i> SMTP Configuration</h6>
+                    
+                    <div class="mb-3">
+                        <label for="smtp_server" class="form-label">SMTP Server *</label>
+                        <input type="text" class="form-control" id="smtp_server" name="smtp_server" 
+                               value="{{ setting.smtp_server or '' }}" placeholder="e.g., smtp.gmail.com" required>
+                        <div class="form-text">SMTP server address (e.g., smtp.gmail.com, smtp-mail.outlook.com)</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="smtp_port" class="form-label">SMTP Port *</label>
+                        <input type="number" class="form-control" id="smtp_port" name="smtp_port" 
+                               value="{{ setting.smtp_port or 587 }}" min="1" max="65535">
+                        <div class="form-text">SMTP server port (587 for TLS, 465 for SSL)</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="smtp_username" class="form-label">SMTP Username *</label>
+                        <input type="text" class="form-control" id="smtp_username" name="smtp_username" 
+                               value="{{ setting.smtp_username or '' }}" placeholder="e.g., your-email@gmail.com" required>
+                        <div class="form-text">SMTP authentication username (usually your email address)</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="smtp_password" class="form-label">SMTP Password *</label>
+                        <input type="password" class="form-control" id="smtp_password" name="smtp_password" 
+                               placeholder="Enter SMTP password" required>
+                        <div class="form-text">SMTP authentication password (use App Password for Gmail)</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="smtp_use_tls" name="smtp_use_tls" 
+                                   {{ 'checked' if setting.smtp_use_tls else '' }}>
+                            <label class="form-check-label" for="smtp_use_tls">
+                                Use TLS Encryption
+                            </label>
+                        </div>
+                        <div class="form-text">Enable TLS encryption for secure connection</div>
+                    </div>
+                    {% endif %}
+
+                    <!-- WhatsApp Configuration -->
+                    {% if setting.notification_type == 'whatsapp' %}
+                    <hr>
+                    <h6><i class="fab fa-whatsapp text-success"></i> WhatsApp Configuration</h6>
+                    
+                    <div class="mb-3">
+                        <label for="whatsapp_api_url" class="form-label">WhatsApp API URL *</label>
+                        <input type="url" class="form-control" id="whatsapp_api_url" name="whatsapp_api_url" 
+                               value="{{ setting.whatsapp_api_url or '' }}" placeholder="e.g., https://api.whatsapp.com/send">
+                        <div class="form-text">WhatsApp API endpoint URL</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="whatsapp_api_key" class="form-label">WhatsApp API Key *</label>
+                        <input type="text" class="form-control" id="whatsapp_api_key" name="whatsapp_api_key" 
+                               value="{{ setting.whatsapp_api_key or '' }}" placeholder="Enter API key">
+                        <div class="form-text">API key for WhatsApp service authentication</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="whatsapp_phone_number" class="form-label">Test Phone Number *</label>
+                        <input type="tel" class="form-control" id="whatsapp_phone_number" name="whatsapp_phone_number" 
+                               value="{{ setting.whatsapp_phone_number or '' }}" placeholder="e.g., +1234567890">
+                        <div class="form-text">Phone number for testing WhatsApp connection</div>
+                    </div>
+                    {% endif %}
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('notifications') }}" class="btn btn-secondary me-md-2">
+                            <i class="fas fa-times"></i> Cancel
+                        </a>
+                        <a href="{{ url_for('test_notification_settings', setting_id=setting.id) }}" class="btn btn-info me-md-2">
+                            <i class="fas fa-vial"></i> Test Connection
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Update Settings
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Form validation
+    document.getElementById('notificationForm').addEventListener('submit', function(e) {
+        const notificationType = '{{ setting.notification_type }}';
+        
+        if (notificationType === 'smtp') {
+            const requiredFields = ['smtp_server', 'smtp_port', 'smtp_username'];
+            for (const field of requiredFields) {
+                const input = document.getElementById(field);
+                if (!input.value.trim()) {
+                    e.preventDefault();
+                    alert(`Please fill in the ${field.replace('_', ' ')} field`);
+                    input.focus();
+                    return;
+                }
+            }
+        } else if (notificationType === 'whatsapp') {
+            const requiredFields = ['whatsapp_api_url', 'whatsapp_api_key', 'whatsapp_phone_number'];
+            for (const field of requiredFields) {
+                const input = document.getElementById(field);
+                if (!input.value.trim()) {
+                    e.preventDefault();
+                    alert(`Please fill in the ${field.replace('_', ' ')} field`);
+                    input.focus();
+                    return;
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -67,6 +67,24 @@
                             <li><a class="dropdown-item" href="{{ url_for('expense_report') }}">Expense Report</a></li>
                         </ul>
                     </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="notificationsDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-bell"></i> Notifications
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{{ url_for('notifications') }}">Notification Settings</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('add_notification_settings') }}">Add Settings</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="documentsDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-file-alt"></i> Documents
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{{ url_for('documents') }}">View Documents</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('upload_document') }}">Upload Document</a></li>
+                        </ul>
+                    </li>
                     {% endif %}
                 </ul>
                 
