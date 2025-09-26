@@ -10,7 +10,7 @@ import os
 
 # Database configuration
 DB_USERNAME = 'root'
-DB_PASSWORD = 'password'  # Change this to your MySQL password
+DB_PASSWORD = 'root'  # Change this to your MySQL password
 DB_HOST = 'localhost'
 DB_PORT = 3306
 DB_NAME = 'society_app'

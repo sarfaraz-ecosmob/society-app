@@ -46,6 +46,7 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     password_hash = db.Column(db.String(120), nullable=False)
+    email = db.Column(db.String(100), nullable=True)  # Added email field for admin users
     is_admin = db.Column(db.Boolean, default=False)
     is_member = db.Column(db.Boolean, default=False)
     house_id = db.Column(db.Integer, db.ForeignKey('house.id'), nullable=True)
@@ -228,7 +229,7 @@ app.jinja_env.globals.update(get_file_icon=get_file_icon)
 class NotificationService:
     @staticmethod
     def send_email_receipt(settings, recipient_email, recipient_name, maintenance_record):
-        """Send maintenance receipt via email using the working method"""
+        """Send maintenance receipt via email with beautiful HTML formatting and PDF attachment"""
         try:
             # Validate required fields
             if not settings.smtp_server or not settings.smtp_server.strip():
@@ -248,35 +249,315 @@ class NotificationService:
             if smtp_server.startswith('.'):
                 return False, "SMTP server address cannot start with a dot"
             
-            # Create the email (same structure as your working code)
+            # Create the email
             msg = MIMEMultipart()
             msg['From'] = settings.sender_email
             msg['To'] = recipient_email
-            msg['Subject'] = f"Maintenance Receipt - {maintenance_record.house.house_number}"
+            msg['Subject'] = f"💰 Maintenance Receipt - {maintenance_record.house.house_number}"
             
-            # Create email body
-            body = f"""
-Dear {recipient_name},
-
-Thank you for your payment. Please find your maintenance receipt details below:
-
-Receipt Number: {maintenance_record.receipt_number}
-House: {maintenance_record.house.house_number} - {maintenance_record.house.building_wing}
-Month/Year: {maintenance_record.month_year}
-Amount Paid: ₹{maintenance_record.paid_amount:.2f}
-Payment Date: {maintenance_record.payment_date.strftime('%d/%m/%Y')}
-Payment Method: {maintenance_record.payment_method}
-
-Thank you for your timely payment.
-
-Best regards,
-{settings.sender_name}
-Society Management
+            # Create beautiful HTML email body
+            html_body = f"""
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Maintenance Receipt</title>
+                <style>
+                    body {{
+                        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                        line-height: 1.6;
+                        color: #333;
+                        max-width: 600px;
+                        margin: 0 auto;
+                        padding: 20px;
+                        background-color: #f8f9fa;
+                    }}
+                    .container {{
+                        background-color: #ffffff;
+                        border-radius: 12px;
+                        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+                        overflow: hidden;
+                    }}
+                    .header {{
+                        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+                        color: white;
+                        padding: 25px;
+                        text-align: center;
+                    }}
+                    .header h1 {{
+                        margin: 0;
+                        font-size: 22px;
+                        font-weight: 600;
+                    }}
+                    .header p {{
+                        margin: 8px 0 0 0;
+                        opacity: 0.9;
+                        font-size: 14px;
+                    }}
+                    .main-content {{
+                        padding: 25px;
+                    }}
+                    .success-box {{
+                        background-color: #d4edda;
+                        border: 1px solid #c3e6cb;
+                        border-radius: 8px;
+                        padding: 15px;
+                        margin-bottom: 20px;
+                        border-left: 4px solid #28a745;
+                    }}
+                    .success-box h2 {{
+                        margin: 0 0 8px 0;
+                        color: #155724;
+                        font-size: 16px;
+                        font-weight: 600;
+                    }}
+                    .success-box p {{
+                        margin: 0;
+                        color: #155724;
+                        font-size: 14px;
+                    }}
+                    .receipt-details {{
+                        background-color: #f8f9fa;
+                        border-radius: 8px;
+                        padding: 20px;
+                        margin-bottom: 20px;
+                        border-left: 4px solid #007bff;
+                    }}
+                    .receipt-details h3 {{
+                        margin: 0 0 15px 0;
+                        color: #007bff;
+                        font-size: 15px;
+                        font-weight: 600;
+                        text-transform: uppercase;
+                        letter-spacing: 0.5px;
+                    }}
+                    .receipt-grid {{
+                        display: grid;
+                        grid-template-columns: 1fr 1fr;
+                        gap: 15px;
+                        margin-bottom: 15px;
+                    }}
+                    .receipt-item {{
+                        background-color: #ffffff;
+                        border-radius: 6px;
+                        padding: 12px;
+                        border: 1px solid #dee2e6;
+                    }}
+                    .receipt-label {{
+                        font-weight: 600;
+                        color: #495057;
+                        font-size: 12px;
+                        margin-bottom: 6px;
+                        text-transform: uppercase;
+                        letter-spacing: 0.5px;
+                    }}
+                    .receipt-value {{
+                        color: #212529;
+                        font-size: 14px;
+                        font-weight: 500;
+                    }}
+                    .amount-highlight {{
+                        background-color: #fff3cd;
+                        border: 1px solid #ffeaa7;
+                        border-radius: 8px;
+                        padding: 15px;
+                        margin: 15px 0;
+                        text-align: center;
+                        border-left: 4px solid #ffc107;
+                    }}
+                    .amount-highlight h3 {{
+                        margin: 0 0 8px 0;
+                        color: #856404;
+                        font-size: 16px;
+                        font-weight: 600;
+                    }}
+                    .amount-value {{
+                        font-size: 24px;
+                        font-weight: 700;
+                        color: #856404;
+                        margin: 0;
+                    }}
+                    .payment-info {{
+                        background-color: #e7f3ff;
+                        border-radius: 8px;
+                        padding: 15px;
+                        margin-bottom: 20px;
+                        border-left: 4px solid #007bff;
+                    }}
+                    .payment-info h3 {{
+                        margin: 0 0 12px 0;
+                        color: #007bff;
+                        font-size: 14px;
+                        font-weight: 600;
+                        text-transform: uppercase;
+                        letter-spacing: 0.5px;
+                    }}
+                    .payment-grid {{
+                        display: grid;
+                        grid-template-columns: 1fr 1fr;
+                        gap: 10px;
+                    }}
+                    .payment-item {{
+                        background-color: #ffffff;
+                        padding: 10px;
+                        border-radius: 6px;
+                        border: 1px solid #dee2e6;
+                    }}
+                    .payment-label {{
+                        font-size: 11px;
+                        color: #6c757d;
+                        font-weight: 600;
+                        text-transform: uppercase;
+                        margin-bottom: 4px;
+                    }}
+                    .payment-value {{
+                        font-size: 13px;
+                        color: #212529;
+                        font-weight: 500;
+                    }}
+                    .timestamp {{
+                        background-color: #e9ecef;
+                        padding: 12px 15px;
+                        border-radius: 8px;
+                        font-family: 'Courier New', monospace;
+                        font-size: 13px;
+                        color: #495057;
+                        text-align: center;
+                        margin: 15px 0 20px 0;
+                        border: 1px solid #dee2e6;
+                    }}
+                    .footer {{
+                        background-color: #f8f9fa;
+                        padding: 15px 25px;
+                        text-align: center;
+                        border-top: 1px solid #dee2e6;
+                    }}
+                    .footer p {{
+                        margin: 0;
+                        color: #6c757d;
+                        font-size: 12px;
+                        line-height: 1.4;
+                    }}
+                    .pdf-notice {{
+                        background-color: #d1ecf1;
+                        border: 1px solid #bee5eb;
+                        border-radius: 8px;
+                        padding: 15px;
+                        margin-bottom: 20px;
+                        border-left: 4px solid #17a2b8;
+                    }}
+                    .pdf-notice h3 {{
+                        margin: 0 0 8px 0;
+                        color: #0c5460;
+                        font-size: 14px;
+                        font-weight: 600;
+                    }}
+                    .pdf-notice p {{
+                        margin: 0;
+                        color: #0c5460;
+                        font-size: 13px;
+                    }}
+                    @media (max-width: 600px) {{
+                        .receipt-grid {{
+                            grid-template-columns: 1fr;
+                        }}
+                        .payment-grid {{
+                            grid-template-columns: 1fr;
+                        }}
+                        .main-content {{
+                            padding: 20px;
+                        }}
+                    }}
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="header">
+                        <h1>💰 Payment Receipt</h1>
+                        <p>Society Management System</p>
+                    </div>
+                    
+                    <div class="main-content">
+                        <div class="success-box">
+                            <h2>✅ Payment Successful</h2>
+                            <p>Thank you for your timely payment. Your maintenance dues have been successfully processed.</p>
+                        </div>
+                        
+                        <div class="receipt-details">
+                            <h3>📋 Receipt Details</h3>
+                            <div class="receipt-grid">
+                                <div class="receipt-item">
+                                    <div class="receipt-label">Receipt Number</div>
+                                    <div class="receipt-value">{maintenance_record.receipt_number}</div>
+                                </div>
+                                <div class="receipt-item">
+                                    <div class="receipt-label">House Details</div>
+                                    <div class="receipt-value">{maintenance_record.house.house_number} - {maintenance_record.house.building_wing}</div>
+                                </div>
+                                <div class="receipt-item">
+                                    <div class="receipt-label">Month/Year</div>
+                                    <div class="receipt-value">{maintenance_record.month_year}</div>
+                                </div>
+                                <div class="receipt-item">
+                                    <div class="receipt-label">Payment Status</div>
+                                    <div class="receipt-value">{maintenance_record.payment_status}</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="amount-highlight">
+                            <h3>💳 Amount Paid</h3>
+                            <p class="amount-value">₹{maintenance_record.paid_amount:.2f}</p>
+                        </div>
+                        
+                        <div class="payment-info">
+                            <h3>💳 Payment Information</h3>
+                            <div class="payment-grid">
+                                <div class="payment-item">
+                                    <div class="payment-label">Payment Method</div>
+                                    <div class="payment-value">{maintenance_record.payment_method}</div>
+                                </div>
+                                <div class="payment-item">
+                                    <div class="payment-label">Payment Date</div>
+                                    <div class="payment-value">{maintenance_record.payment_date.strftime('%d/%m/%Y')}</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="timestamp">
+                            📅 Receipt Generated: {datetime.now().strftime('%A, %B %d, %Y at %I:%M %p')}
+                        </div>
+                        
+                        <div class="pdf-notice">
+                            <h3>📄 PDF Receipt Attached</h3>
+                            <p>A detailed PDF receipt has been attached to this email for your records. Please save it for future reference.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="footer">
+                        <p>This receipt is generated automatically by the Society Management System.</p>
+                        <p>Please keep this receipt for your records and future reference.</p>
+                    </div>
+                </div>
+            </body>
+            </html>
             """
             
-            msg.attach(MIMEText(body, 'plain'))
+            # Attach HTML email
+            msg.attach(MIMEText(html_body, 'html'))
             
-            # Use the exact same method as your working smtp-test.py
+            # Generate and attach PDF receipt
+            pdf_content = NotificationService.generate_pdf_receipt(maintenance_record, settings.sender_name)
+            if pdf_content:
+                pdf_attachment = MIMEBase('application', 'pdf')
+                pdf_attachment.set_payload(pdf_content)
+                encoders.encode_base64(pdf_attachment)
+                pdf_attachment.add_header('Content-Disposition', 
+                                        f'attachment; filename="Receipt_{maintenance_record.receipt_number}.pdf"')
+                msg.attach(pdf_attachment)
+            
+            # Send email using SMTP
             server = smtplib.SMTP(smtp_server, settings.smtp_port)
             
             if settings.smtp_use_tls:
@@ -286,7 +567,7 @@ Society Management
             server.sendmail(settings.sender_email, recipient_email, msg.as_string())
             server.quit()
             
-            return True, "Email sent successfully"
+            return True, "Email with PDF receipt sent successfully"
             
         except smtplib.SMTPAuthenticationError as e:
             return False, f"SMTP Authentication failed: {str(e)}"
@@ -413,6 +694,480 @@ Society Management
                 
         except Exception as e:
             return False, f"WhatsApp API connection failed: {str(e)}"
+    
+    @staticmethod
+    def send_complaint_notification(settings, admin_email, complaint, complainant_name, house_info):
+        """Send complaint notification to admin via email with HTML formatting"""
+        try:
+            # Validate required fields
+            if not settings.smtp_server or not settings.smtp_server.strip():
+                return False, "SMTP server address is required"
+            
+            if not settings.smtp_port:
+                return False, "SMTP port is required"
+            
+            if not settings.smtp_username or not settings.smtp_username.strip():
+                return False, "SMTP username is required"
+            
+            if not settings.smtp_password or not settings.smtp_password.strip():
+                return False, "SMTP password is required"
+            
+            if not admin_email:
+                return False, "Admin email address is required"
+            
+            # Clean server address
+            smtp_server = settings.smtp_server.strip()
+            if smtp_server.startswith('.'):
+                return False, "SMTP server address cannot start with a dot"
+            
+            # Create the email
+            msg = MIMEMultipart()
+            msg['From'] = settings.sender_email
+            msg['To'] = admin_email
+            msg['Subject'] = f"🚨 New Complaint Raised - {complaint.title}"
+            
+            # Get priority color
+            priority_colors = {
+                'Low': '#28a745',      # Green
+                'Medium': '#ffc107',   # Yellow
+                'High': '#fd7e14',     # Orange
+                'Urgent': '#dc3545'    # Red
+            }
+            priority_color = priority_colors.get(complaint.priority, '#6c757d')
+            
+            # Create single HTML email body with organized layout
+            html_body = f"""
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>New Complaint Notification</title>
+                <style>
+                    body {{
+                        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                        line-height: 1.6;
+                        color: #333;
+                        max-width: 600px;
+                        margin: 0 auto;
+                        padding: 20px;
+                        background-color: #f8f9fa;
+                    }}
+                    .container {{
+                        background-color: #ffffff;
+                        border-radius: 12px;
+                        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+                        overflow: hidden;
+                    }}
+                    .header {{
+                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                        color: white;
+                        padding: 25px;
+                        text-align: center;
+                    }}
+                    .header h1 {{
+                        margin: 0;
+                        font-size: 22px;
+                        font-weight: 600;
+                    }}
+                    .header p {{
+                        margin: 8px 0 0 0;
+                        opacity: 0.9;
+                        font-size: 14px;
+                    }}
+                    .main-content {{
+                        padding: 25px;
+                    }}
+                    .complaint-title {{
+                        background-color: #fff3cd;
+                        border: 1px solid #ffeaa7;
+                        border-radius: 8px;
+                        padding: 15px;
+                        margin-bottom: 20px;
+                        border-left: 4px solid #f39c12;
+                    }}
+                    .complaint-title h2 {{
+                        margin: 0 0 8px 0;
+                        color: #856404;
+                        font-size: 16px;
+                        font-weight: 600;
+                    }}
+                    .complaint-title p {{
+                        margin: 0;
+                        color: #856404;
+                        font-size: 14px;
+                    }}
+                    .info-grid {{
+                        display: grid;
+                        grid-template-columns: 1fr 1fr;
+                        gap: 15px;
+                        margin-bottom: 20px;
+                    }}
+                    .info-item {{
+                        background-color: #f8f9fa;
+                        border-radius: 8px;
+                        padding: 15px;
+                        border-left: 4px solid #007bff;
+                    }}
+                    .info-label {{
+                        font-weight: 600;
+                        color: #495057;
+                        font-size: 12px;
+                        margin-bottom: 8px;
+                        text-transform: uppercase;
+                        letter-spacing: 0.5px;
+                    }}
+                    .info-value {{
+                        color: #212529;
+                        font-size: 14px;
+                        font-weight: 500;
+                    }}
+                    .priority-badge {{
+                        display: inline-block;
+                        padding: 4px 10px;
+                        border-radius: 15px;
+                        color: white;
+                        font-weight: 600;
+                        font-size: 11px;
+                        text-transform: uppercase;
+                        letter-spacing: 0.5px;
+                        background-color: {priority_color};
+                    }}
+                    .timestamp {{
+                        background-color: #e9ecef;
+                        padding: 12px 15px;
+                        border-radius: 8px;
+                        font-family: 'Courier New', monospace;
+                        font-size: 13px;
+                        color: #495057;
+                        text-align: center;
+                        margin: 15px 0 20px 0;
+                        border: 1px solid #dee2e6;
+                    }}
+                    .description-section {{
+                        background-color: #ffffff;
+                        border: 1px solid #dee2e6;
+                        border-radius: 8px;
+                        padding: 20px;
+                        margin-bottom: 20px;
+                    }}
+                    .description-section h3 {{
+                        margin: 0 0 15px 0;
+                        color: #495057;
+                        font-size: 15px;
+                        font-weight: 600;
+                        border-bottom: 2px solid #e9ecef;
+                        padding-bottom: 8px;
+                    }}
+                    .description-text {{
+                        color: #212529;
+                        line-height: 1.6;
+                        font-size: 14px;
+                        white-space: pre-wrap;
+                    }}
+                    .complainant-section {{
+                        background-color: #f8f9fa;
+                        border-radius: 8px;
+                        padding: 15px;
+                        margin-bottom: 20px;
+                        border-left: 4px solid #28a745;
+                    }}
+                    .complainant-section h3 {{
+                        margin: 0 0 12px 0;
+                        color: #28a745;
+                        font-size: 14px;
+                        font-weight: 600;
+                        text-transform: uppercase;
+                        letter-spacing: 0.5px;
+                    }}
+                    .complainant-info {{
+                        display: grid;
+                        grid-template-columns: 1fr 1fr;
+                        gap: 10px;
+                    }}
+                    .complainant-item {{
+                        background-color: #ffffff;
+                        padding: 10px;
+                        border-radius: 6px;
+                        border: 1px solid #dee2e6;
+                    }}
+                    .complainant-label {{
+                        font-size: 11px;
+                        color: #6c757d;
+                        font-weight: 600;
+                        text-transform: uppercase;
+                        margin-bottom: 4px;
+                    }}
+                    .complainant-value {{
+                        font-size: 13px;
+                        color: #212529;
+                        font-weight: 500;
+                    }}
+                    .action-section {{
+                        text-align: center;
+                        margin-top: 20px;
+                    }}
+                    .action-button {{
+                        display: inline-block;
+                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                        color: white;
+                        text-decoration: none;
+                        padding: 12px 24px;
+                        border-radius: 6px;
+                        font-weight: 600;
+                        font-size: 14px;
+                        transition: transform 0.2s;
+                    }}
+                    .action-button:hover {{
+                        transform: translateY(-2px);
+                    }}
+                    .footer {{
+                        background-color: #f8f9fa;
+                        padding: 15px 25px;
+                        text-align: center;
+                        border-top: 1px solid #dee2e6;
+                    }}
+                    .footer p {{
+                        margin: 0;
+                        color: #6c757d;
+                        font-size: 12px;
+                        line-height: 1.4;
+                    }}
+                    @media (max-width: 600px) {{
+                        .info-grid {{
+                            grid-template-columns: 1fr;
+                        }}
+                        .complainant-info {{
+                            grid-template-columns: 1fr;
+                        }}
+                        .main-content {{
+                            padding: 20px;
+                        }}
+                    }}
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="header">
+                        <h1>🚨 New Complaint Alert</h1>
+                        <p>Society Management System</p>
+                    </div>
+                    
+                    <div class="main-content">
+                        <div class="complaint-title">
+                            <h2>⚠️ Action Required</h2>
+                            <p>A new complaint has been raised and requires your immediate attention.</p>
+                        </div>
+                        
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <div class="info-label">Complaint Title</div>
+                                <div class="info-value">{complaint.title}</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">Category</div>
+                                <div class="info-value">{complaint.category.title()}</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">Priority Level</div>
+                                <div class="info-value">
+                                    <span class="priority-badge">{complaint.priority}</span>
+                                </div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">Status</div>
+                                <div class="info-value">{complaint.status}</div>
+                            </div>
+                        </div>
+                        
+                        <div class="timestamp">
+                            📅 Created: {complaint.created_at.strftime('%A, %B %d, %Y at %I:%M %p')}
+                        </div>
+                        
+                        <div class="complainant-section">
+                            <h3>👤 Complainant Information</h3>
+                            <div class="complainant-info">
+                                <div class="complainant-item">
+                                    <div class="complainant-label">Name</div>
+                                    <div class="complainant-value">{complainant_name}</div>
+                                </div>
+                                <div class="complainant-item">
+                                    <div class="complainant-label">House</div>
+                                    <div class="complainant-value">{house_info}</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="description-section">
+                            <h3>📝 Complaint Description</h3>
+                            <div class="description-text">{complaint.description}</div>
+                        </div>
+                        
+                        <div class="action-section">
+                            <a href="#" class="action-button">🔧 Review in Admin Panel</a>
+                        </div>
+                    </div>
+                    
+                    <div class="footer">
+                        <p>This is an automated notification from the Society Management System.</p>
+                        <p>Please log in to the admin panel to review and take necessary action.</p>
+                    </div>
+                </div>
+            </body>
+            </html>
+            """
+            
+            # Attach only HTML version
+            msg.attach(MIMEText(html_body, 'html'))
+            
+            # Send email using SMTP
+            server = smtplib.SMTP(smtp_server, settings.smtp_port)
+            
+            if settings.smtp_use_tls:
+                server.starttls()
+            
+            server.login(settings.smtp_username.strip(), settings.smtp_password.strip())
+            server.sendmail(settings.sender_email, admin_email, msg.as_string())
+            server.quit()
+            
+            return True, "Complaint notification email sent successfully"
+            
+        except smtplib.SMTPAuthenticationError as e:
+            return False, f"SMTP Authentication failed: {str(e)}"
+        except smtplib.SMTPConnectError as e:
+            return False, f"SMTP Connection failed: {str(e)}"
+        except smtplib.SMTPException as e:
+            return False, f"SMTP Error: {str(e)}"
+        except Exception as e:
+            return False, f"Failed to send complaint notification email: {str(e)}"
+    
+    @staticmethod
+    def generate_pdf_receipt(maintenance_record, sender_name):
+        """Generate PDF receipt for maintenance payment"""
+        try:
+            from reportlab.lib.pagesizes import letter, A4
+            from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+            from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+            from reportlab.lib.units import inch
+            from reportlab.lib import colors
+            from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
+            from io import BytesIO
+            
+            # Create PDF in memory
+            buffer = BytesIO()
+            doc = SimpleDocTemplate(buffer, pagesize=A4, topMargin=1*inch, bottomMargin=1*inch)
+            
+            # Get styles
+            styles = getSampleStyleSheet()
+            
+            # Create custom styles
+            title_style = ParagraphStyle(
+                'CustomTitle',
+                parent=styles['Heading1'],
+                fontSize=24,
+                spaceAfter=30,
+                alignment=TA_CENTER,
+                textColor=colors.darkgreen
+            )
+            
+            header_style = ParagraphStyle(
+                'CustomHeader',
+                parent=styles['Heading2'],
+                fontSize=16,
+                spaceAfter=20,
+                alignment=TA_CENTER,
+                textColor=colors.darkblue
+            )
+            
+            normal_style = ParagraphStyle(
+                'CustomNormal',
+                parent=styles['Normal'],
+                fontSize=12,
+                spaceAfter=12
+            )
+            
+            # Build PDF content
+            story = []
+            
+            # Title
+            story.append(Paragraph("💰 MAINTENANCE PAYMENT RECEIPT", title_style))
+            story.append(Spacer(1, 20))
+            
+            # Society Information
+            story.append(Paragraph("Society Management System", header_style))
+            story.append(Paragraph(f"Generated by: {sender_name}", normal_style))
+            story.append(Paragraph(f"Receipt Generated: {datetime.now().strftime('%A, %B %d, %Y at %I:%M %p')}", normal_style))
+            story.append(Spacer(1, 20))
+            
+            # Receipt Details Table
+            receipt_data = [
+                ['Receipt Number:', maintenance_record.receipt_number],
+                ['House Details:', f"{maintenance_record.house.house_number} - {maintenance_record.house.building_wing}"],
+                ['Owner Name:', maintenance_record.house.owner_name],
+                ['Month/Year:', maintenance_record.month_year],
+                ['Amount Due:', f"₹{maintenance_record.amount:.2f}"],
+                ['Amount Paid:', f"₹{maintenance_record.paid_amount:.2f}"],
+                ['Payment Status:', maintenance_record.payment_status],
+                ['Payment Method:', maintenance_record.payment_method],
+                ['Payment Date:', maintenance_record.payment_date.strftime('%d/%m/%Y')]
+            ]
+            
+            receipt_table = Table(receipt_data, colWidths=[2*inch, 3*inch])
+            receipt_table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (0, -1), colors.lightgrey),
+                ('BACKGROUND', (1, 0), (1, -1), colors.white),
+                ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
+                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+                ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+                ('FONTNAME', (1, 0), (1, -1), 'Helvetica'),
+                ('FONTSIZE', (0, 0), (-1, -1), 12),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 12),
+                ('GRID', (0, 0), (-1, -1), 1, colors.black)
+            ]))
+            
+            story.append(receipt_table)
+            story.append(Spacer(1, 30))
+            
+            # Amount Highlight
+            amount_data = [
+                ['TOTAL AMOUNT PAID:', f"₹{maintenance_record.paid_amount:.2f}"]
+            ]
+            
+            amount_table = Table(amount_data, colWidths=[2*inch, 3*inch])
+            amount_table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, -1), colors.darkgreen),
+                ('TEXTCOLOR', (0, 0), (-1, -1), colors.white),
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                ('FONTNAME', (0, 0), (-1, -1), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, -1), 16),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 15),
+                ('TOPPADDING', (0, 0), (-1, -1), 15)
+            ]))
+            
+            story.append(amount_table)
+            story.append(Spacer(1, 30))
+            
+            # Footer
+            story.append(Paragraph("Thank you for your timely payment!", normal_style))
+            story.append(Spacer(1, 10))
+            story.append(Paragraph("This receipt is generated automatically by the Society Management System.", normal_style))
+            story.append(Paragraph("Please keep this receipt for your records and future reference.", normal_style))
+            
+            # Build PDF
+            doc.build(story)
+            
+            # Get PDF content
+            pdf_content = buffer.getvalue()
+            buffer.close()
+            
+            return pdf_content
+            
+        except ImportError:
+            # If reportlab is not installed, return None
+            return None
+        except Exception as e:
+            print(f"Error generating PDF: {str(e)}")
+            return None
 
 # Authentication decorator
 def login_required(f):
@@ -1062,8 +1817,37 @@ def raise_complaint():
         db.session.add(complaint)
         db.session.commit()
         
-        # Send notification to admin (placeholder for now)
-        flash('Complaint raised successfully! Admin has been notified.', 'success')
+        # Send email notification to admin
+        try:
+            # Get active notification settings
+            notification_settings = NotificationSettings.get_active_settings()
+            
+            if notification_settings and notification_settings.notification_type == 'smtp':
+                # Get admin user with email
+                admin_user = User.query.filter_by(is_admin=True).first()
+                
+                if admin_user and admin_user.email:
+                    # Get complainant name and house info
+                    complainant_name = user.username
+                    house_info = f"{house.house_number} - {house.building_wing}"
+                    
+                    # Send email notification
+                    success, message = NotificationService.send_complaint_notification(
+                        notification_settings, admin_user.email, complaint, complainant_name, house_info
+                    )
+                    
+                    if success:
+                        flash('Complaint raised successfully! Admin has been notified via email.', 'success')
+                    else:
+                        flash(f'Complaint raised successfully, but failed to send email notification: {message}', 'warning')
+                else:
+                    flash('Complaint raised successfully, but admin email not configured for notifications.', 'warning')
+            else:
+                flash('Complaint raised successfully, but email notifications are not configured.', 'info')
+                
+        except Exception as e:
+            flash(f'Complaint raised successfully, but failed to send notification: {str(e)}', 'warning')
+        
         return redirect(url_for('member_complaints'))
     
     return render_template('raise_complaint.html', house=house)
@@ -1392,6 +2176,26 @@ def mark_maintenance_paid(maintenance_id):
     flash('Payment status updated successfully!', 'success')
     return redirect(url_for('maintenance'))
 
+@app.route('/admin/profile', methods=['GET', 'POST'])
+@admin_required
+def admin_profile():
+    user = User.query.get(session['user_id'])
+    
+    if request.method == 'POST':
+        # Update profile information
+        user.email = request.form.get('email', '').strip()
+        
+        # Validate email if provided
+        if user.email and '@' not in user.email:
+            flash('Please enter a valid email address', 'error')
+            return render_template('admin_profile.html', user=user)
+        
+        db.session.commit()
+        flash('Profile updated successfully!', 'success')
+        return redirect(url_for('admin_profile'))
+    
+    return render_template('admin_profile.html', user=user)
+
 @app.route('/change_password', methods=['GET', 'POST'])
 @admin_required
 def change_password():
@@ -1551,10 +2355,17 @@ if __name__ == '__main__':
             admin_user = User(
                 username='admin',
                 password_hash=generate_password_hash('admin123'),
+                email='admin@society.com',  # Default admin email
                 is_admin=True
             )
             db.session.add(admin_user)
             db.session.commit()
-            print("Default admin user created: username='admin', password='admin123'")
+            print("Default admin user created: username='admin', password='admin123', email='admin@society.com'")
+        else:
+            # Update existing admin user with email if not set
+            if not admin_user.email:
+                admin_user.email = 'admin@society.com'
+                db.session.commit()
+                print("Updated existing admin user with email: admin@society.com")
     
     app.run(debug=True, host='0.0.0.0', port=5002)

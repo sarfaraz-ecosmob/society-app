@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Profile - Society Maintenance App{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="container">
+        <h1><i class="fas fa-user-cog"></i> Admin Profile</h1>
+        <p>Manage your admin profile information and email settings.</p>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-user-edit"></i> Profile Information
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="username" class="form-label">
+                                    <i class="fas fa-user"></i> Username
+                                </label>
+                                <input type="text" class="form-control" id="username" value="{{ user.username }}" readonly>
+                                <div class="form-text">Username cannot be changed</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="email" class="form-label">
+                                    <i class="fas fa-envelope"></i> Email Address
+                                </label>
+                                <input type="email" class="form-control" id="email" name="email" 
+                                       value="{{ user.email or '' }}" 
+                                       placeholder="Enter your email address">
+                                <div class="form-text">This email will be used for complaint notifications</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="user_type" class="form-label">
+                                    <i class="fas fa-shield-alt"></i> User Type
+                                </label>
+                                <input type="text" class="form-control" id="user_type" 
+                                       value="{% if user.is_admin %}Administrator{% else %}Member{% endif %}" readonly>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="created_at" class="form-label">
+                                    <i class="fas fa-calendar"></i> Account Created
+                                </label>
+                                <input type="text" class="form-control" id="created_at" 
+                                       value="{{ user.created_at.strftime('%B %d, %Y') }}" readonly>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="house_info" class="form-label">
+                            <i class="fas fa-home"></i> House Information
+                        </label>
+                        <input type="text" class="form-control" id="house_info" 
+                               value="{% if user.house %}{{ user.house.house_number }} - {{ user.house.building_wing }}{% else %}Not assigned{% endif %}" readonly>
+                        <div class="form-text">Admin users are not assigned to specific houses</div>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Email Notifications:</strong> When members raise complaints, you will receive email notifications at the email address specified above. Make sure to set a valid email address to receive important notifications.
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary me-md-2">
+                            <i class="fas fa-arrow-left"></i> Back to Dashboard
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Update Profile
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-cog"></i> Account Settings
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="d-grid">
+                            <a href="{{ url_for('change_password') }}" class="btn btn-outline-warning">
+                                <i class="fas fa-key"></i> Change Password
+                            </a>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-grid">
+                            <a href="{{ url_for('notifications') }}" class="btn btn-outline-info">
+                                <i class="fas fa-bell"></i> Notification Settings
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-line"></i> Profile Statistics
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-4">
+                        <div class="stats-item">
+                            <div class="stats-number">{{ user.complaints|length if user.complaints else 0 }}</div>
+                            <div class="stats-label">Complaints Handled</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="stats-item">
+                            <div class="stats-number">{{ user.expenses|length if user.expenses else 0 }}</div>
+                            <div class="stats-label">Expenses Created</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="stats-item">
+                            <div class="stats-number">{{ user.documents|length if user.documents else 0 }}</div>
+                            <div class="stats-label">Documents Uploaded</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.stats-item {
+    padding: 20px;
+    border-radius: 8px;
+    background-color: #f8f9fa;
+    margin-bottom: 15px;
+}
+
+.stats-number {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #007bff;
+    margin-bottom: 5px;
+}
+
+.stats-label {
+    font-size: 0.9rem;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+</style>
+{% endblock %}

@@ -118,6 +118,10 @@
                         </a>
                         <ul class="dropdown-menu">
                             {% if session.is_admin %}
+                            <li><a class="dropdown-item" href="{{ url_for('admin_profile') }}">
+                                <i class="fas fa-user-cog"></i> Admin Profile
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item" href="{{ url_for('change_password') }}">
                                 <i class="fas fa-key"></i> Change Password
                             </a></li>
